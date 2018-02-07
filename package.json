@@ -1,0 +1,37 @@
+{
+  "name": "app-history",
+  "version": "0.0.1",
+  "description": "History management for progressive web apps",
+  "main": "dist/app-history.js",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack",
+    "lint": "tslint --format stylish --fix src/**/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mwikstrom/app-history.git"
+  },
+  "keywords": [
+    "history",
+    "location"
+  ],
+  "author": "Mårten Wikström",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mwikstrom/app-history/issues"
+  },
+  "homepage": "https://github.com/mwikstrom/app-history#readme",
+  "dependencies": {
+    "history": "^4.7.2"
+  },
+  "devDependencies": {
+    "@types/history": "^4.6.2",
+    "clean-webpack-plugin": "^0.1.18",
+    "dts-bundle": "^0.7.3",
+    "ts-loader": "^3.4.0",
+    "tslint": "^5.9.1",
+    "typescript": "^2.7.1",
+    "webpack": "^3.10.0"
+  }
+}
