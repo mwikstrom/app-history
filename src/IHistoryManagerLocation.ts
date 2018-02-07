@@ -1,4 +1,4 @@
-export interface HistoryManagerLocation {
+export interface IHistoryManagerLocation {
     pathname: string;
     search: string;
     hash: string;

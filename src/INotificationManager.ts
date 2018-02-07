@@ -1,6 +1,7 @@
 import { HistoryManagerListener } from "./HistoryManagerListener";
 import { UnregisterHistoryManagerListener } from "./UnregisterHistoryManagerListener";
 
-export interface HistoryManager {
+export interface INotificationManager {
     listen(listener: HistoryManagerListener): UnregisterHistoryManagerListener;
+    suppress(state: boolean): void;
 }

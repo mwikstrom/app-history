@@ -1,5 +1,5 @@
 import { History } from "history";
 
-export interface HistoryManagerOptions {
+export interface IHistoryManagerOptions {
     history?: History;
 }

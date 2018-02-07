@@ -1,14 +1,14 @@
 import { History, UnregisterCallback } from "history";
 
 import { HistoryManagerListener } from "./HistoryManagerListener";
-import { HistoryManagerLocation } from "./HistoryManagerLocation";
-import { NotificationManager } from "./NotificationManager";
+import { IHistoryManagerLocation } from "./IHistoryManagerLocation";
+import { INotificationManager } from "./INotificationManager";
 
-export function createNotificationManager(history: History): NotificationManager {
+export function createNotificationManager(history: History): INotificationManager {
     const listeners: HistoryManagerListener[] = [];
     let registration: UnregisterCallback | null = null;
     let isSuppressed = false;
-    let suppressedLocation: HistoryManagerLocation | null = null;
+    let suppressedLocation: IHistoryManagerLocation | null = null;
 
     const ensureRegistered = () => {
         if (!registration) {
@@ -19,10 +19,10 @@ export function createNotificationManager(history: History): NotificationManager
                     hash,
                 } = full;
 
-                const location: HistoryManagerLocation = {
+                const location: IHistoryManagerLocation = {
+                    hash,
                     pathname,
                     search,
-                    hash,
                 };
 
                 Object.freeze(location);
@@ -57,14 +57,14 @@ export function createNotificationManager(history: History): NotificationManager
         }
     };
 
-    const notify = (location: HistoryManagerLocation) => {
+    const notify = (location: IHistoryManagerLocation) => {
         listeners.forEach(listener => listener(location));
     };
 
     const listen = (listener: HistoryManagerListener) => {
         let isActive = true;
 
-        const wrapped = (location: HistoryManagerLocation) => {
+        const wrapped = (location: IHistoryManagerLocation) => {
             if (isActive) {
                 listener(location);
             }
@@ -88,7 +88,7 @@ export function createNotificationManager(history: History): NotificationManager
         }
     };
 
-    const manager: NotificationManager = {
+    const manager: INotificationManager = {
         listen,
         suppress,
     };

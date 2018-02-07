@@ -1,3 +1,3 @@
-import { HistoryManagerLocation } from "./HistoryManagerLocation";
+import { IHistoryManagerLocation } from "./IHistoryManagerLocation";
 
-export type HistoryManagerListener = (location: HistoryManagerLocation) => void;
+export type HistoryManagerListener = (location: IHistoryManagerLocation) => void;

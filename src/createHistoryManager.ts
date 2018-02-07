@@ -1,10 +1,10 @@
 import { createBrowserHistory } from "history";
 
 import { createNotificationManager } from "./createNotificationManager";
-import { HistoryManager } from "./HistoryManager";
-import { HistoryManagerOptions } from "./HistoryManagerOptions";
+import { IHistoryManager } from "./IHistoryManager";
+import { IHistoryManagerOptions } from "./IHistoryManagerOptions";
 
-export function createHistoryManager(options: HistoryManagerOptions = {}): HistoryManager {
+export function createHistoryManager(options: IHistoryManagerOptions = {}): IHistoryManager {
     const {
         history = createBrowserHistory(),
     } = options;
@@ -13,7 +13,7 @@ export function createHistoryManager(options: HistoryManagerOptions = {}): Histo
         listen,
     } = createNotificationManager(history);
 
-    const manager: HistoryManager = {
+    const manager: IHistoryManager = {
         listen,
     };
 
