@@ -1,6 +1,6 @@
 {
   "name": "app-history",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "History management for progressive web apps",
   "main": "dist/app-history.js",
   "scripts": {
