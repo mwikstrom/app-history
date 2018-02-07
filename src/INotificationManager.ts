@@ -1,7 +1,7 @@
-import { HistoryManagerListener } from "./HistoryManagerListener";
-import { UnregisterHistoryManagerListener } from "./UnregisterHistoryManagerListener";
+import { LocationListener } from "./LocationListener";
+import { UnregisterListener } from "./UnregisterListener";
 
 export interface INotificationManager {
-    listen(listener: HistoryManagerListener): UnregisterHistoryManagerListener;
+    listen(listener: LocationListener): UnregisterListener;
     suppress(state: boolean): void;
 }

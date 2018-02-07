@@ -1,25 +1,25 @@
 import { History, UnregisterCallback } from "history";
 
-import { HistoryManagerListener } from "./HistoryManagerListener";
-import { IHistoryManagerLocation } from "./IHistoryManagerLocation";
+import { ILocation } from "./ILocation";
 import { INotificationManager } from "./INotificationManager";
+import { LocationListener } from "./LocationListener";
 
 export function createNotificationManager(history: History): INotificationManager {
-    const listeners: HistoryManagerListener[] = [];
+    const listeners: LocationListener[] = [];
     let registration: UnregisterCallback | null = null;
     let isSuppressed = false;
-    let suppressedLocation: IHistoryManagerLocation | null = null;
+    let suppressedLocation: ILocation | null = null;
 
     const ensureRegistered = () => {
         if (!registration) {
             registration = history.listen(full => {
                 const {
+                    hash,
                     pathname,
                     search,
-                    hash,
                 } = full;
 
-                const location: IHistoryManagerLocation = {
+                const location: ILocation = {
                     hash,
                     pathname,
                     search,
@@ -43,12 +43,12 @@ export function createNotificationManager(history: History): INotificationManage
         }
     };
 
-    const addListener = (listener: HistoryManagerListener) => {
+    const addListener = (listener: LocationListener) => {
         listeners.push(listener);
         ensureRegistered();
     };
 
-    const removeListener = (listener: HistoryManagerListener) => {
+    const removeListener = (listener: LocationListener) => {
         const index = listeners.indexOf(listener);
 
         if (index >= 0) {
@@ -57,14 +57,14 @@ export function createNotificationManager(history: History): INotificationManage
         }
     };
 
-    const notify = (location: IHistoryManagerLocation) => {
+    const notify = (location: ILocation) => {
         listeners.forEach(listener => listener(location));
     };
 
-    const listen = (listener: HistoryManagerListener) => {
+    const listen = (listener: LocationListener) => {
         let isActive = true;
 
-        const wrapped = (location: IHistoryManagerLocation) => {
+        const wrapped = (location: ILocation) => {
             if (isActive) {
                 listener(location);
             }

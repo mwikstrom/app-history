@@ -1,6 +1,6 @@
-import { HistoryManagerListener } from "./HistoryManagerListener";
-import { UnregisterHistoryManagerListener } from "./UnregisterHistoryManagerListener";
+import { LocationListener } from "./LocationListener";
+import { UnregisterListener } from "./UnregisterListener";
 
 export interface IHistoryManager {
-    listen(listener: HistoryManagerListener): UnregisterHistoryManagerListener;
+    listen(listener: LocationListener): UnregisterListener;
 }
