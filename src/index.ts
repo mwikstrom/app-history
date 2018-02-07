@@ -1,1 +1,1 @@
-export { createHistoryManager } from "./createHistoryManager";
+export { createAppHistory } from "./createAppHistory";
