@@ -7,7 +7,7 @@ export function isWrappedState(state?: LocationState): state is IWrappedState {
 
     if (typeof state === "object") {
         const { depth } = state;
-        ok = Number.isInteger(depth) && depth >= 0;
+        ok = depth === parseInt(depth, 10) && depth >= 0;
     }
 
     return ok;

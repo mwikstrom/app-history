@@ -13,6 +13,7 @@ import { createLocationDescriptor } from "./createLocationDescriptor";
 import { createWrappedState } from "./createWrappedState";
 import { IAppHistory } from "./IAppHistory";
 import { IAppHistoryOptions } from "./IAppHistoryOptions";
+import { isWrappedState } from "./isWrappedState";
 import { FORWARD, REPLACE } from "./NavigationMode";
 import { Notifier } from "./Notifier";
 
@@ -20,6 +21,11 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const {
         source = createBrowserHistory(),
     } = options;
+
+    if (!isWrappedState(source.location.state)) {
+        const wrapped = createWrappedState(source.location, REPLACE, source.location);
+        source.replace(createLocationDescriptor(source.location, wrapped));
+    }
 
     const notifier = new Notifier(source);
 
