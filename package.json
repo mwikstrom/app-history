@@ -6,6 +6,7 @@
   "types": "dist/app-history.d.ts",
   "scripts": {
     "test": "jest",
+    "test:watch": "jest --watch",
     "build": "webpack",
     "lint": "tslint --format stylish src/**/*.ts",
     "lint:fix": "tslint --format stylish --fix src/**/*.ts",

@@ -5,8 +5,9 @@ import {
     Path,
 } from "history";
 
+import { isWrappedState } from "./isWrappedState";
 import { IWrappedState } from "./IWrappedState";
-import { NavigationMode } from "./NavigationMode";
+import { BACK, FORWARD, NavigationMode } from "./NavigationMode";
 
 export function createWrappedState(
     sourceLocation: Location,
@@ -14,13 +15,25 @@ export function createWrappedState(
     pathOrDescriptor: Path | LocationDescriptorObject,
     state?: LocationState,
 ): IWrappedState {
-    // TODO: Implement createWrappedState
-    // This is a dummy to avoid TS6133
-    if (!state) {
-        state = !!sourceLocation && !!mode && !!pathOrDescriptor;
+    let depth = 0;
+    let inner = state;
+
+    if (isWrappedState(sourceLocation.state)) {
+        depth = sourceLocation.state.depth;
+
+        if (mode === FORWARD) {
+            ++depth;
+        } else if (mode === BACK && depth > 0) {
+            --depth;
+        }
+    }
+
+    if (typeof pathOrDescriptor === "object") {
+        inner = pathOrDescriptor.state;
     }
 
     return {
-        inner: state,
+        depth,
+        inner,
     };
 }
