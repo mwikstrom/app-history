@@ -8,7 +8,7 @@ import {
     TransitionPromptHook,
 } from "history";
 
-import { copyLocationDescriptor } from "./copyLocationDescriptor";
+import { createLocationDescriptor } from "./createLocationDescriptor";
 import { createExposedLocation } from "./createExposedLocation";
 import { createWrappedState } from "./createWrappedState";
 import { IAppHistory } from "./IAppHistory";
@@ -39,8 +39,8 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             if (typeof pathOrDescriptor === "string") {
                 source.push(pathOrDescriptor, wrappedState);
             } else {
-                const descriptorCopy = copyLocationDescriptor(pathOrDescriptor, wrappedState);
-                source.push(descriptorCopy);
+                const descriptor = createLocationDescriptor(pathOrDescriptor, wrappedState);
+                source.push(descriptor);
             }
         },
 
@@ -53,8 +53,8 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             if (typeof pathOrDescriptor === "string") {
                 source.replace(pathOrDescriptor, wrappedState);
             } else {
-                const descriptorCopy = copyLocationDescriptor(pathOrDescriptor, wrappedState);
-                source.replace(descriptorCopy);
+                const descriptor = createLocationDescriptor(pathOrDescriptor, wrappedState);
+                source.replace(descriptor);
             }
         },
 

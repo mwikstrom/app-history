@@ -2,7 +2,7 @@ import { LocationDescriptorObject } from "history";
 
 import { IWrappedState } from "./IWrappedState";
 
-export function copyLocationDescriptor(
+export function createLocationDescriptor(
     source: LocationDescriptorObject,
     state: IWrappedState,
 ): LocationDescriptorObject {
