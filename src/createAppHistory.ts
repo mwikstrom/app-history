@@ -8,8 +8,8 @@ import {
     TransitionPromptHook,
 } from "history";
 
-import { createLocationDescriptor } from "./createLocationDescriptor";
 import { createExposedLocation } from "./createExposedLocation";
+import { createLocationDescriptor } from "./createLocationDescriptor";
 import { createWrappedState } from "./createWrappedState";
 import { IAppHistory } from "./IAppHistory";
 import { IAppHistoryOptions } from "./IAppHistoryOptions";
