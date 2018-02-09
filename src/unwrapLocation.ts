@@ -1,17 +1,16 @@
-import { Location } from "history";
-
+import { ILocation } from "./api";
 import { isWrappedState } from "./isWrappedState";
 
-export function unwrapLocation(source: Location): Location {
-    if (isWrappedState(source.state)) {
+export function unwrapLocation(input: ILocation): ILocation {
+    if (isWrappedState(input.state)) {
         return {
-            hash: source.hash,
-            key: source.key,
-            pathname: source.pathname,
-            search: source.search,
-            state: source.state.inner,
+            hash: input.hash,
+            key: input.key,
+            pathname: input.pathname,
+            search: input.search,
+            state: input.state.data,
         };
     } else {
-        return source;
+        return input;
     }
 }

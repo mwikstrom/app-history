@@ -1,13 +1,12 @@
-import { LocationState } from "history";
+import { IWrappedState } from "./api";
+import { isMetaState } from "./isMetaState";
 
-import { IWrappedState } from "./IWrappedState";
-
-export function isWrappedState(state?: LocationState): state is IWrappedState {
+export function isWrappedState(state?: any): state is IWrappedState {
     let ok = false;
 
     if (typeof state === "object") {
-        const { depth } = state;
-        ok = depth === parseInt(depth, 10) && depth >= 0;
+        const { meta } = state;
+        ok = isMetaState(meta);
     }
 
     return ok;

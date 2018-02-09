@@ -8,8 +8,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "build": "webpack",
-    "lint": "tslint --format stylish src/**/*.ts",
-    "lint:fix": "tslint --format stylish --fix src/**/*.ts",
+    "lint": "tslint --format stylish src/*.ts src/**/*.ts",
+    "lint:fix": "tslint --format stylish --fix src/*.ts src/**/*.ts",
     "report-coverage": "minicat coverage/lcov.info | coveralls",
     "check": "npm run lint:fix && npm run lint && npm run build && npm run test"
   },
@@ -28,11 +28,11 @@
   },
   "homepage": "https://github.com/mwikstrom/app-history#readme",
   "dependencies": {
-    "history": "^4.7.2",
-    "@types/history": "^4.6.2"
+    "history": "^4.7.2"    
   },
   "devDependencies": {
     "@types/jest": "^22.1.1",
+    "@types/history": "^4.6.2",
     "clean-webpack-plugin": "^0.1.18",
     "coveralls": "^3.0.0",
     "dts-bundle": "^0.7.3",
@@ -62,7 +62,6 @@
       "src/*.ts"
     ],
     "coveragePathIgnorePatterns": [
-      "I[A-Z]",
       "index.ts"
     ],
     "coverageReporters": [

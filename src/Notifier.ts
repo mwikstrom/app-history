@@ -1,28 +1,28 @@
 import {
-    Action,
-    History,
-    Location,
-    LocationListener,
+    IHistory,
+    ILocation,
+    NavigationAction,
+    NavigationListener,
     UnregisterCallback,
-} from "history";
+} from "./api";
 
 import { unwrapLocation } from "./unwrapLocation";
 
 export class Notifier {
-    private listeners: LocationListener[] = [];
+    private listeners: NavigationListener[] = [];
     private registration: UnregisterCallback | null = null;
     private isSuppressing = false;
-    private lastSuppressedLocation: Location | null = null;
-    private lastSuppressedAction: Action | null = null;
+    private lastSuppressedLocation: ILocation | null = null;
+    private lastSuppressedAction: NavigationAction | null = null;
 
-    constructor(private source: History) {
+    constructor(private source: IHistory) {
         this.onSourceLocationChanged = this.onSourceLocationChanged.bind(this);
     }
 
-    public listen(listener: LocationListener) {
+    public listen(listener: NavigationListener) {
         let isActive = true;
 
-        const wrapped = (location: Location, action: Action) => {
+        const wrapped = (location: ILocation, action: NavigationAction) => {
             if (isActive) {
                 listener(location, action);
             }
@@ -63,12 +63,12 @@ export class Notifier {
         }
     }
 
-    private addListener(listener: LocationListener) {
+    private addListener(listener: NavigationListener) {
         this.listeners.push(listener);
         this.ensureRegistered();
     }
 
-    private removeListener(listener: LocationListener) {
+    private removeListener(listener: NavigationListener) {
         const index = this.listeners.indexOf(listener);
 
         if (index >= 0) {
@@ -77,11 +77,11 @@ export class Notifier {
         }
     }
 
-    private notify(location: Location, action: Action) {
+    private notify(location: ILocation, action: NavigationAction) {
         this.listeners.forEach(listener => listener(location, action));
     }
 
-    private onSourceLocationChanged(sourceLocation: Location, action: Action) {
+    private onSourceLocationChanged(sourceLocation: ILocation, action: NavigationAction) {
         const exposedLocation = unwrapLocation(sourceLocation);
 
         if (this.isSuppressing) {
