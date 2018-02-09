@@ -9,7 +9,8 @@ import {
 import { unwrapLocation } from "./unwrapLocation";
 
 export class Notifier {
-    private listeners: NavigationListener[] = [];
+    private keygen = 0;
+    private listeners: { [key: string]: NavigationListener } = {};
     private registration: UnregisterCallback | null = null;
     private isSuppressing = false;
     private lastSuppressedLocation: ILocation | null = null;
@@ -20,20 +21,8 @@ export class Notifier {
     }
 
     public listen(listener: NavigationListener) {
-        let isActive = true;
-
-        const wrapped = (location: ILocation, action: NavigationAction) => {
-            if (isActive) {
-                listener(location, action);
-            }
-        };
-
-        this.addListener(wrapped);
-
-        return () => {
-            isActive = false;
-            this.removeListener(wrapped);
-        };
+        const key = this.addListener(listener);
+        return this.removeListener.bind(this, key);
     }
 
     public suppress(state: boolean) {
@@ -57,28 +46,28 @@ export class Notifier {
     }
 
     private unregisterWhenEmpty() {
-        if (this.listeners.length === 0 && !!this.registration) {
+        if (Object.keys(this.listeners).length === 0 && this.registration) {
             this.registration();
             this.registration = null;
         }
     }
 
     private addListener(listener: NavigationListener) {
-        this.listeners.push(listener);
+        const key = String(++this.keygen);
+        this.listeners[key] = listener;
         this.ensureRegistered();
+        return key;
     }
 
-    private removeListener(listener: NavigationListener) {
-        const index = this.listeners.indexOf(listener);
-
-        if (index >= 0) {
-            this.listeners.splice(index, 1);
-            this.unregisterWhenEmpty();
-        }
+    private removeListener(key: string) {
+        delete this.listeners[key];
+        this.unregisterWhenEmpty();
     }
 
     private notify(location: ILocation, action: NavigationAction) {
-        this.listeners.forEach(listener => listener(location, action));
+        Object.keys(this.listeners).forEach(key => {
+            this.listeners[key](location, action);
+        });
     }
 
     private onSourceLocationChanged(sourceLocation: ILocation, action: NavigationAction) {
