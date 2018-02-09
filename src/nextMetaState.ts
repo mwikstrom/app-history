@@ -1,4 +1,4 @@
-import { IHistory, IMetaState, NavigationAction, POP, PUSH, REPLACE } from "./api";
+import { IHistory, IMetaState, NavigationAction, POP, PUSH } from "./api";
 import { initialMetaState } from "./initialMetaState";
 import { isWrappedLocation } from "./isWrappedLocation";
 
@@ -23,7 +23,7 @@ function nextMetaCore(
     switch (action) {
         case PUSH: return afterPush(meta, path);
         case POP: return afterPop(meta);
-        default: case REPLACE: return afterReplace(meta, path);
+        default: return afterReplace(meta, path);
     }
 }
 
