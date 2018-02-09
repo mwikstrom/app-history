@@ -1,6 +1,6 @@
 {
   "name": "app-history",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "History management for progressive web apps",
   "main": "dist/app-history.js",
   "types": "dist/app-history.d.ts",
@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/mwikstrom/app-history#readme",
   "dependencies": {
-    "history": "^4.7.2"    
+    "history": "^4.7.2"
   },
   "devDependencies": {
     "@types/jest": "^22.1.1",
