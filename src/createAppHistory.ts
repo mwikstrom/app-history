@@ -18,12 +18,14 @@ import { unwrapLocation } from "./unwrapLocation";
 export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory {
     const {
         source = createBrowserHistory(),
-        cacheLimit = 10,
+        cacheLimit = 20,
     } = options;
 
     const notifier = new Notifier(source);
 
     const history: IAppHistory = {
+        get cacheLimit() { return cacheLimit; },
+
         get depth() {
             if (isWrappedLocation(source.location)) {
                 return source.location.state.meta.depth;

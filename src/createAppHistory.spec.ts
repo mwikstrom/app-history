@@ -5,7 +5,13 @@ import { createAppHistory } from "./createAppHistory";
 
 describe("createAppHistory", () => {
     it("can be invoked without arguments", () => {
-        createAppHistory();
+        const history = createAppHistory();
+        expect(history.cacheLimit).toBe(20);
+    });
+
+    it("can be invoked with cache limit", () => {
+        const history = createAppHistory({ cacheLimit: 123 });
+        expect(history.cacheLimit).toBe(123);
     });
 
     describe("returns a history extension object that", () => {
@@ -40,6 +46,85 @@ describe("createAppHistory", () => {
             expect(history.action).toBe(REPLACE);
             history.goBack();
             expect(history.action).toBe(POP);
+        });
+
+        it("can push using location descriptor", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            history.push({ hash: "#foo" });
+            expect(history.location.hash).toBe("#foo");
+        });
+
+        it("can replace using location descriptor", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            history.replace({ hash: "#foo" });
+            expect(history.location.hash).toBe("#foo");
+        });
+
+        it("can go back and forward", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            history.push("foo");
+            expect(history.location.pathname).toBe("/foo");
+            history.push("bar");
+            expect(history.location.pathname).toBe("/bar");
+            history.goBack();
+            expect(history.location.pathname).toBe("/foo");
+            history.goForward();
+            expect(history.location.pathname).toBe("/bar");
+        });
+
+        it("can go back and forward using delta", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            history.push("foo");
+            expect(history.location.pathname).toBe("/foo");
+            history.push("bar");
+            expect(history.location.pathname).toBe("/bar");
+            history.go(0);
+            expect(history.location.pathname).toBe("/bar");
+            history.go(-1);
+            expect(history.location.pathname).toBe("/foo");
+            history.go(1);
+            expect(history.location.pathname).toBe("/bar");
+        });
+
+        it("can block and unblock navigation", () => {
+            const history = createAppHistory({
+                source: createMemoryHistory({
+                    getUserConfirmation() {
+                        return false;
+                    },
+                }),
+            });
+            history.push("foo");
+            expect(history.location.pathname).toBe("/foo");
+            const unblock = history.block(() => "blocked");
+            history.push("bar");
+            expect(history.location.pathname).toBe("/foo");
+            unblock();
+            history.push("bar");
+            expect(history.location.pathname).toBe("/bar");
+        });
+
+        it("can listen to location changes", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            let count = 0;
+            const stop = history.listen(() => ++count);
+            history.push("foo");
+            expect(count).toBe(1);
+            history.push("bar");
+            expect(count).toBe(2);
+            stop();
+            history.push("baz");
+            expect(count).toBe(2);
+        });
+
+        it("can create href from descriptor", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            const href = history.createHref({
+                hash: "baz",
+                pathname: "foo",
+                search: "bar",
+            });
+            expect(href).toBe("foo?bar#baz");
         });
     });
 });
