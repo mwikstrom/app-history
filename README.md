@@ -4,7 +4,7 @@
 [![code coverage][coveralls-badge]][coveralls]
 [![npm package][npm-badge]][npm]
 
-`app-history` is an extension to [`history`][history] design for use in progressive web apps. The API is a superset of `history` so you can use it as a drop-in replacement in [`react-router`][react-router] for example.
+`app-history` is an extension to [`history`][history] designed for use in progressive web apps. The API is a superset of [`history`][history] so you can use it as a drop-in replacement in [`react-router`][react-router] for example. TypeScript definitions are included.
 
 <!-- TODO: Installation -->
 <!-- TODO: Usage -->
