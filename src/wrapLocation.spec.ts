@@ -1,5 +1,5 @@
-import { wrapLocation } from "./wrapLocation";
 import { initialMetaState } from "./initialMetaState";
+import { wrapLocation } from "./wrapLocation";
 
 describe("wrapLocation", () => {
     it("returns the initial meta state", () => {
@@ -17,7 +17,7 @@ describe("wrapLocation", () => {
         expect(wrapped.key).toBe(given.key);
         expect(wrapped.pathname).toBe(given.pathname);
         expect(wrapped.search).toBe(given.search);
-        
+
         const state = wrapped.state;
         expect(state.data).toBe(given.state);
         expect(state.meta).toMatchObject(initialMetaState());

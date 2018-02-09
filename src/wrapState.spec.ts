@@ -1,5 +1,5 @@
-import { wrapState } from "./wrapState";
 import { initialMetaState } from "./initialMetaState";
+import { wrapState } from "./wrapState";
 
 describe("wrapState", () => {
     it("returns the specified meta state", () => {
