@@ -12,10 +12,10 @@ export interface IHistory {
     location: ILocation;
 
     push(path: string, state?: any): void;
-    push(location: ILocation): void;
+    push(location: Partial<ILocation>): void;
 
     replace(path: string, state?: any): void;
-    replace(location: ILocation): void;
+    replace(location: Partial<ILocation>): void;
 
     go(delta: number): void;
 
@@ -27,5 +27,5 @@ export interface IHistory {
 
     listen(listener: NavigationListener): UnregisterCallback;
 
-    createHref(location: ILocation): string;
+    createHref(location: Partial<ILocation>): string;
 }

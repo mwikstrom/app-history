@@ -53,7 +53,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             return notifier.listen(listener);
         },
 
-        createHref(location: ILocation): string {
+        createHref(location: Partial<ILocation>): string {
             return source.createHref(location);
         },
     };

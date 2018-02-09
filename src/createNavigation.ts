@@ -7,7 +7,7 @@ export type CreatableNavigationAction =
     typeof REPLACE;
 
 export type NavigationFunc = (
-    pathOrDescriptor: string | ILocation,
+    pathOrDescriptor: string | Partial<ILocation>,
     state?: any,
 ) => void;
 
