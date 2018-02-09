@@ -48,7 +48,7 @@
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
-    "testRegex": "/test/.*\\.ts$",
+    "testRegex": "src/.*\\.spec\\.ts$",
     "moduleFileExtensions": [
       "ts",
       "js",
@@ -62,7 +62,8 @@
       "src/*.ts"
     ],
     "coveragePathIgnorePatterns": [
-      "index.ts"
+      "index\\.ts",
+      "\\.spec\\.ts$"
     ],
     "coverageReporters": [
       "text",

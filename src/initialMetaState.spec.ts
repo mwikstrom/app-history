@@ -1,5 +1,5 @@
-import { initialMetaState } from "../src/initialMetaState";
-import { isMetaState } from "../src/isMetaState";
+import { initialMetaState } from "./initialMetaState";
+import { isMetaState } from "./isMetaState";
 
 describe("initialMetaState", () => {
     it("is valid", () => {
