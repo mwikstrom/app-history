@@ -60,6 +60,10 @@
     "collectCoverageFrom": [
       "src/*.ts"
     ],
+    "coveragePathIgnorePatterns": [
+      "I[A-Z]",
+      "index.ts"
+    ],
     "coverageReporters": [
       "text",
       "lcov"
