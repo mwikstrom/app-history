@@ -5,11 +5,11 @@ import { NavigationListener } from "./NavigationListener";
 import { UnregisterCallback } from "./UnregisterCallback";
 
 export interface IHistory {
-    length: number;
+    readonly length: number;
 
-    action: NavigationAction;
+    readonly action: NavigationAction;
 
-    location: ILocation;
+    readonly location: ILocation;
 
     push(path: string, state?: any): void;
     push(location: Partial<ILocation>): void;

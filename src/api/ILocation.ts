@@ -1,8 +1,8 @@
 
 export interface ILocation<TState = any> {
-    hash: string;
-    pathname: string;
-    search: string;
-    state: TState;
-    key?: string;
+    readonly hash: string;
+    readonly pathname: string;
+    readonly search: string;
+    readonly state: TState;
+    readonly key?: string;
 }

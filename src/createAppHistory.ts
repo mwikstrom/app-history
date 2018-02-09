@@ -14,7 +14,6 @@ import { createNavigation } from "./createNavigation";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { Notifier } from "./Notifier";
 import { unwrapLocation } from "./unwrapLocation";
-import { wrapLocation } from "./wrapLocation";
 
 export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory {
     const {
@@ -22,13 +21,17 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         cacheLimit = 10,
     } = options;
 
-    if (!isWrappedLocation(source.location)) {
-        source.replace(wrapLocation(source.location));
-    }
-
     const notifier = new Notifier(source);
 
     const history: IAppHistory = {
+        get depth() {
+            if (isWrappedLocation(source.location)) {
+                return source.location.state.meta.depth;
+            } else {
+                return 0;
+            }
+        },
+
         get length() { return source.length; },
 
         get action() { return source.action; },
