@@ -8,7 +8,6 @@ import {
     TransitionPromptHook,
 } from "history";
 
-import { createExposedLocation } from "./createExposedLocation";
 import { createLocationDescriptor } from "./createLocationDescriptor";
 import { createWrappedState } from "./createWrappedState";
 import { IAppHistory } from "./IAppHistory";
@@ -16,6 +15,7 @@ import { IAppHistoryOptions } from "./IAppHistoryOptions";
 import { isWrappedState } from "./isWrappedState";
 import { FORWARD, REPLACE } from "./NavigationMode";
 import { Notifier } from "./Notifier";
+import { unwrapLocation } from "./unwrapLocation";
 
 export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory {
     const {
@@ -34,7 +34,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
         get action() { return source.action; },
 
-        get location() { return createExposedLocation(source.location); },
+        get location() { return unwrapLocation(source.location); },
 
         push(
             pathOrDescriptor: Path | LocationDescriptorObject,

@@ -6,7 +6,7 @@ import {
     UnregisterCallback,
 } from "history";
 
-import { createExposedLocation } from "./createExposedLocation";
+import { unwrapLocation } from "./unwrapLocation";
 
 export class Notifier {
     private listeners: LocationListener[] = [];
@@ -82,7 +82,7 @@ export class Notifier {
     }
 
     private onSourceLocationChanged(sourceLocation: Location, action: Action) {
-        const exposedLocation = createExposedLocation(sourceLocation);
+        const exposedLocation = unwrapLocation(sourceLocation);
 
         if (this.isSuppressing) {
             this.lastSuppressedLocation = exposedLocation;
