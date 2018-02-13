@@ -10,8 +10,8 @@ import {
     REPLACE,
 } from "./api";
 
-import { makeNavigationFunc } from "./makeNavigationFunc";
 import { isWrappedLocation } from "./isWrappedLocation";
+import { makeNavigationFunc } from "./makeNavigationFunc";
 import { Notifier } from "./Notifier";
 import { unwrapLocation } from "./unwrapLocation";
 

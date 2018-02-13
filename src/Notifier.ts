@@ -9,9 +9,8 @@ import {
 import { unwrapLocation } from "./unwrapLocation";
 
 export class Notifier {
-    private keygen = 0;
-    private listeners: { [key: string]: NavigationListener } = {};
-    private registration: UnregisterCallback | null = null;
+    private listeners: NavigationListener[] = [];
+    private unregister: UnregisterCallback | null = null;
     private isSuppressing = false;
     private lastSuppressedLocation: ILocation | null = null;
     private lastSuppressedAction: NavigationAction | null = null;
@@ -21,8 +20,19 @@ export class Notifier {
     }
 
     public listen(listener: NavigationListener) {
-        const key = this.addListener(listener);
-        return this.removeListener.bind(this, key);
+        let isActive = true;
+
+        this.listeners.push(listener);
+        this.ensureRegistered();
+
+        return () => {
+            const index = this.listeners.indexOf(listener);
+            if (index >= 0 && isActive) {
+                this.listeners.splice(index, 1);
+                isActive = false;
+                this.unregisterWhenEmpty();
+            }
+        };
     }
 
     public suppress(state: boolean) {
@@ -40,33 +50,21 @@ export class Notifier {
     }
 
     private ensureRegistered() {
-        if (!this.registration) {
-            this.registration = this.source.listen(this.onSourceLocationChanged);
+        if (!this.unregister) {
+            this.unregister = this.source.listen(this.onSourceLocationChanged);
         }
     }
 
     private unregisterWhenEmpty() {
-        if (Object.keys(this.listeners).length === 0 && this.registration) {
-            this.registration();
-            this.registration = null;
+        if (this.listeners.length === 0 && this.unregister) {
+            this.unregister();
+            this.unregister = null;
         }
     }
 
-    private addListener(listener: NavigationListener) {
-        const key = String(++this.keygen);
-        this.listeners[key] = listener;
-        this.ensureRegistered();
-        return key;
-    }
-
-    private removeListener(key: string) {
-        delete this.listeners[key];
-        this.unregisterWhenEmpty();
-    }
-
     private notify(location: ILocation, action: NavigationAction) {
-        Object.keys(this.listeners).forEach(key => {
-            this.listeners[key](location, action);
+        this.listeners.forEach(listener => {
+            listener(location, action);
         });
     }
 
