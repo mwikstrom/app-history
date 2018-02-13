@@ -11,7 +11,7 @@ export type NavigationFunc = (
     state?: any,
 ) => void;
 
-export function createNavigation(
+export function makeNavigationFunc(
     source: IHistory,
     action: CreatableNavigationAction,
     cacheLimit: number,

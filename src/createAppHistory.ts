@@ -10,7 +10,7 @@ import {
     REPLACE,
 } from "./api";
 
-import { createNavigation } from "./createNavigation";
+import { makeNavigationFunc } from "./makeNavigationFunc";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { Notifier } from "./Notifier";
 import { unwrapLocation } from "./unwrapLocation";
@@ -40,9 +40,9 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
         get location() { return unwrapLocation(source.location); },
 
-        push: createNavigation(source, PUSH, cacheLimit),
+        push: makeNavigationFunc(source, PUSH, cacheLimit),
 
-        replace: createNavigation(source, REPLACE, cacheLimit),
+        replace: makeNavigationFunc(source, REPLACE, cacheLimit),
 
         go(delta: number) { source.go(delta); },
 
