@@ -11,9 +11,7 @@ import { unwrapLocation } from "./unwrapLocation";
 export class Notifier {
     private listeners: NavigationListener[] = [];
     private unregister: UnregisterCallback | null = null;
-    private isSuppressing = false;
-    private lastSuppressedLocation: ILocation | null = null;
-    private lastSuppressedAction: NavigationAction | null = null;
+    private suppressCount = 0;
 
     constructor(private source: IHistory) {
         this.onSourceLocationChanged = this.onSourceLocationChanged.bind(this);
@@ -35,18 +33,16 @@ export class Notifier {
         };
     }
 
-    public suppress(state: boolean) {
-        this.isSuppressing = state;
+    public suppress() {
+        let isActive = true;
+        ++this.suppressCount;
 
-        if (!this.isSuppressing && !!this.lastSuppressedLocation) {
-            const notifyLocation = this.lastSuppressedLocation;
-            const notifyAction = this.lastSuppressedAction;
-
-            this.lastSuppressedLocation = null;
-            this.lastSuppressedAction = null;
-
-            this.notify(notifyLocation, notifyAction!);
-        }
+        return () => {
+            if (isActive) {
+                --this.suppressCount;
+                isActive = false;
+            }
+        };
     }
 
     private ensureRegistered() {
@@ -69,12 +65,8 @@ export class Notifier {
     }
 
     private onSourceLocationChanged(sourceLocation: ILocation, action: NavigationAction) {
-        const exposedLocation = unwrapLocation(sourceLocation);
-
-        if (this.isSuppressing) {
-            this.lastSuppressedLocation = exposedLocation;
-            this.lastSuppressedAction = action;
-        } else {
+        if (this.suppressCount === 0) {
+            const exposedLocation = unwrapLocation(sourceLocation);
             this.notify(exposedLocation, action);
         }
     }

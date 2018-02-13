@@ -8,6 +8,7 @@ import {
     NavigationListener,
     PUSH,
     REPLACE,
+    UnregisterCallback,
 } from "./api";
 
 import { isWrappedLocation } from "./isWrappedLocation";
@@ -25,6 +26,8 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
     const push = makeNavigationFunc(source, PUSH, cacheLimit);
     const replace = makeNavigationFunc(source, REPLACE, cacheLimit);
+
+    const suppress = () => notifier.suppress();
 
     const history: IAppHistory = {
         get cacheLimit() { return cacheLimit; },
@@ -54,27 +57,27 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         goForward() { source.goForward(); },
 
         goHome(pathOrLocation?: string | Partial<ILocation>, state?: any) {
-            let didSuppress = false;
+            if (isWrappedLocation(source.location)) {
+                const meta = source.location.state.meta;
+                if (meta.depth > 0) {
+                    let resume: UnregisterCallback | null = null;
 
-            try {
-                if (isWrappedLocation(source.location)) {
-                    const meta = source.location.state.meta;
-                    if (meta.depth > 0) {
+                    try {
                         if (typeof pathOrLocation !== "undefined") {
-                            notifier.suppress(true);
-                            didSuppress = true;
+                            resume = suppress();
                         }
+
                         source.go(-meta.depth);
+                    } finally {
+                        if (resume) {
+                            resume();
+                        }
                     }
                 }
+            }
 
-                if (typeof pathOrLocation !== "undefined") {
-                    replace(pathOrLocation, state);
-                }
-            } finally {
-                if (didSuppress) {
-                    notifier.suppress(false);
-                }
+            if (typeof pathOrLocation !== "undefined") {
+                replace(pathOrLocation, state);
             }
         },
 

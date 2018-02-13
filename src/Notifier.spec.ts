@@ -16,17 +16,23 @@ describe("Notifier", () => {
             expect(count).toBe(1);
         });
 
-        it("notification is deferred while suppressed", () => {
+        it("notifications can be suppressed", () => {
             const source = createMemoryHistory();
             const notifier = new Notifier(source);
             let count = 0;
             notifier.listen(() => ++count);
             source.push("apa");
             expect(count).toBe(1);
-            notifier.suppress(true);
+            const resume1 = notifier.suppress();
+            const resume2 = notifier.suppress();
             source.push("bapa");
             expect(count).toBe(1);
-            notifier.suppress(false);
+            resume1();
+            resume1(); // this has no effect
+            source.push("olle");
+            expect(count).toBe(1);
+            resume2();
+            source.push("bolle");
             expect(count).toBe(2);
         });
 
