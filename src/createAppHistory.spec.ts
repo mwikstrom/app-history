@@ -156,5 +156,16 @@ describe("createAppHistory", () => {
             expect(history.location.pathname).toBe("/foo");
             expect(history.depth).toBe(0);
         });
+
+        it("can go home to path", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            expect(history.location.pathname).toBe("/");
+            history.push("foo");
+            history.push("bar");
+            expect(history.depth).toBe(2);
+            history.goHome("home");
+            expect(history.location.pathname).toBe("/home");
+            expect(history.depth).toBe(0);
+        });
     });
 });

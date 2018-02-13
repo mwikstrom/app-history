@@ -53,11 +53,27 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
         goForward() { source.goForward(); },
 
-        goHome() {
-            if (isWrappedLocation(source.location)) {
-                const meta = source.location.state.meta;
-                if (meta.depth > 0) {
-                    source.go(-meta.depth);
+        goHome(pathOrLocation?: string | Partial<ILocation>, state?: any) {
+            let didSuppress = false;
+
+            try {
+                if (isWrappedLocation(source.location)) {
+                    const meta = source.location.state.meta;
+                    if (meta.depth > 0) {
+                        if (typeof pathOrLocation !== "undefined") {
+                            notifier.suppress(true);
+                            didSuppress = true;
+                        }
+                        source.go(-meta.depth);
+                    }
+                }
+
+                if (typeof pathOrLocation !== "undefined") {
+                    replace(pathOrLocation, state);
+                }
+            } finally {
+                if (didSuppress) {
+                    notifier.suppress(false);
                 }
             }
         },
