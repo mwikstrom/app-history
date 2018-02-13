@@ -23,6 +23,9 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
     const notifier = new Notifier(source);
 
+    const push = makeNavigationFunc(source, PUSH, cacheLimit);
+    const replace = makeNavigationFunc(source, REPLACE, cacheLimit);
+
     const history: IAppHistory = {
         get cacheLimit() { return cacheLimit; },
 
@@ -40,15 +43,24 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
         get location() { return unwrapLocation(source.location); },
 
-        push: makeNavigationFunc(source, PUSH, cacheLimit),
+        push,
 
-        replace: makeNavigationFunc(source, REPLACE, cacheLimit),
+        replace,
 
         go(delta: number) { source.go(delta); },
 
         goBack() { source.goBack(); },
 
         goForward() { source.goForward(); },
+
+        goHome() {
+            if (isWrappedLocation(source.location)) {
+                const meta = source.location.state.meta;
+                if (meta.depth > 0) {
+                    source.go(-meta.depth);
+                }
+            }
+        },
 
         block(prompt?: boolean | string | BlockPrompt) {
             return source.block(prompt);

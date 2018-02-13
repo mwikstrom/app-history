@@ -126,5 +126,35 @@ describe("createAppHistory", () => {
             });
             expect(href).toBe("foo?bar#baz");
         });
+
+        it("can go home without pushing", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            expect(history.location.pathname).toBe("/");
+            expect(history.depth).toBe(0);
+            history.goHome();
+            expect(history.location.pathname).toBe("/");
+            expect(history.depth).toBe(0);
+        });
+
+        it("can go home after pushing", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            expect(history.location.pathname).toBe("/");
+            history.push("foo");
+            history.push("bar");
+            expect(history.depth).toBe(2);
+            history.goHome();
+            expect(history.location.pathname).toBe("/");
+            expect(history.depth).toBe(0);
+        });
+
+        it("can go home after replacing", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            expect(history.location.pathname).toBe("/");
+            history.replace("foo");
+            expect(history.depth).toBe(0);
+            history.goHome();
+            expect(history.location.pathname).toBe("/foo");
+            expect(history.depth).toBe(0);
+        });
     });
 });
