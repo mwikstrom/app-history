@@ -20,6 +20,7 @@ import { makeNavigationFunc } from "./makeNavigationFunc";
 import { Notifier } from "./Notifier";
 import { Suppressor } from "./Suppressor";
 import { unwrapLocation } from "./unwrapLocation";
+import { wrapLocation } from "./wrapLocation";
 
 interface IInternalFindLastResult {
     delta: number;
@@ -91,17 +92,42 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         return result;
     };
 
+    let exposedLocation = source.location;
+    let exposedAction = source.action as NavigationAction;
+    let exposedDepth = 0;
+
+    if (isWrappedLocation(exposedLocation)) {
+        const meta = exposedLocation.state.meta;
+        exposedDepth = meta.depth;
+        exposedLocation = unwrapLocation(exposedLocation);
+        // TODO: Add support for "cut here"
+    } else {
+        try {
+            source.replace(wrapLocation(exposedLocation));
+        } catch (ignored) { /* don't choke on init */ }
+    }
+
+    source.listen((location, action) => {
+        exposedLocation = location;
+        exposedAction = action;
+
+        if (isWrappedLocation(exposedLocation)) {
+            const meta = exposedLocation.state.meta;
+            exposedDepth = meta.depth;
+            exposedLocation = unwrapLocation(exposedLocation);
+            // TODO: Add support for "cut here"
+        } else {
+            exposedDepth = 0;
+        }
+    });
+
     const history: IAppHistory = {
         get cacheLimit(): number {
             return cacheLimit;
         },
 
         get depth(): number {
-            if (isWrappedLocation(source.location)) {
-                return source.location.state.meta.depth;
-            } else {
-                return 0;
-            }
+            return exposedDepth;
         },
 
         get isSuppressed(): boolean {
@@ -113,11 +139,11 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         },
 
         get action(): NavigationAction {
-            return source.action;
+            return exposedAction;
         },
 
         get location(): ILocation {
-            return unwrapLocation(source.location);
+            return exposedLocation;
         },
 
         push,

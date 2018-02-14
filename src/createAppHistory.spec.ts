@@ -128,6 +128,16 @@ describe("createAppHistory", () => {
             expect(href).toBe("foo?bar#baz");
         });
 
+        it("cannot go home after tamper", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+            history.push("a");
+            history.push("b");
+            source.push("c");
+            history.goHome();
+            expect(history.location.pathname).toBe("/c");
+        });
+
         it("can go home without pushing", () => {
             const history = createAppHistory({source: createMemoryHistory()});
             expect(history.location.pathname).toBe("/");
@@ -251,6 +261,15 @@ describe("createAppHistory", () => {
             expect(history.location.pathname).toBe("/e");
         });
 
+        it("cannot find delta when state was tampered", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+            history.push("a");
+            history.push("b");
+            source.push("c");
+            expect(history.findLast("/a")).toBe(NaN);
+        });
+
         it("can find delta positions in back stack without any cache", () => {
             const history = createAppHistory({source: createMemoryHistory(), cacheLimit: 0});
 
@@ -299,6 +318,27 @@ describe("createAppHistory", () => {
                 expect(history.isSuppressed).toBe(true);
             });
             expect(history.isSuppressed).toBe(false);
+        });
+
+        it("is reset to zero depth when state is tampered", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+            history.push("foo");
+            history.push("bar");
+            expect(history.depth).toBe(2);
+            source.push("baz");
+            expect(history.depth).toBe(0);
+        });
+
+        it("can be fooled by fake meta state", () => {
+            const source = createMemoryHistory();
+            source.push("fooled", {
+                data: "fake",
+                meta: { cache: [], depth: 123 },
+            });
+            const history = createAppHistory({source});
+            expect(history.depth).toBe(123);
+            expect(history.location.state).toBe("fake");
         });
     });
 });
