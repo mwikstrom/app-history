@@ -6,14 +6,14 @@ import {
     UnregisterCallback,
 } from "./api";
 
+import { Suppressor } from "./Suppressor";
 import { unwrapLocation } from "./unwrapLocation";
 
 export class Notifier {
     private listeners: NavigationListener[] = [];
     private unregister: UnregisterCallback | null = null;
-    private suppressCount = 0;
 
-    constructor(private source: IHistory) {
+    constructor(private source: IHistory, private suppressor: Suppressor) {
         this.onSourceLocationChanged = this.onSourceLocationChanged.bind(this);
     }
 
@@ -29,18 +29,6 @@ export class Notifier {
                 this.listeners.splice(index, 1);
                 isActive = false;
                 this.unregisterWhenEmpty();
-            }
-        };
-    }
-
-    public suppress() {
-        let isActive = true;
-        ++this.suppressCount;
-
-        return () => {
-            if (isActive) {
-                --this.suppressCount;
-                isActive = false;
             }
         };
     }
@@ -65,7 +53,7 @@ export class Notifier {
     }
 
     private onSourceLocationChanged(sourceLocation: ILocation, action: NavigationAction) {
-        if (this.suppressCount === 0) {
+        if (!this.suppressor.isActive) {
             const exposedLocation = unwrapLocation(sourceLocation);
             this.notify(exposedLocation, action);
         }

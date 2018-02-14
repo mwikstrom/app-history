@@ -11,7 +11,7 @@
     "lint": "tslint --format stylish src/*.ts src/**/*.ts",
     "lint:fix": "tslint --format stylish --fix src/*.ts src/**/*.ts",
     "report-coverage": "minicat coverage/lcov.info | coveralls",
-    "check": "npm run lint:fix && npm run lint && npm run build && npm run test"
+    "check": "npm run lint:fix && npm run build && npm run test"
   },
   "repository": {
     "type": "git",

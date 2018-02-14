@@ -1,12 +1,13 @@
 import { createMemoryHistory } from "history";
 
 import { Notifier } from "./Notifier";
+import { Suppressor } from "./Suppressor";
 
 describe("Notifier", () => {
     describe("listener", () => {
         it("is invoked when source location changes", () => {
             const source = createMemoryHistory();
-            const notifier = new Notifier(source);
+            const notifier = new Notifier(source, new Suppressor());
             let count = 0;
             const unregister = notifier.listen(() => ++count);
             source.push("apa");
@@ -18,13 +19,14 @@ describe("Notifier", () => {
 
         it("notifications can be suppressed", () => {
             const source = createMemoryHistory();
-            const notifier = new Notifier(source);
+            const suppressor = new Suppressor();
+            const notifier = new Notifier(source, suppressor);
             let count = 0;
             notifier.listen(() => ++count);
             source.push("apa");
             expect(count).toBe(1);
-            const resume1 = notifier.suppress();
-            const resume2 = notifier.suppress();
+            const resume1 = suppressor.suppress();
+            const resume2 = suppressor.suppress();
             source.push("bapa");
             expect(count).toBe(1);
             resume1();
@@ -38,7 +40,7 @@ describe("Notifier", () => {
 
         it("can be registered multiple times", () => {
             const source = createMemoryHistory();
-            const notifier = new Notifier(source);
+            const notifier = new Notifier(source, new Suppressor());
             let count = 0;
             const callback = () => ++count;
             const unregister1 = notifier.listen(callback);

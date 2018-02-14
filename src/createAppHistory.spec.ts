@@ -96,7 +96,7 @@ describe("createAppHistory", () => {
             });
             history.push("foo");
             expect(history.location.pathname).toBe("/foo");
-            const unblock = history.block(() => "blocked");
+            const unblock = history.block("blocked");
             history.push("bar");
             expect(history.location.pathname).toBe("/foo");
             unblock();

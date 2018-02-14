@@ -11,9 +11,11 @@ import {
     UnregisterCallback,
 } from "./api";
 
+import { Blocker } from "./Blocker";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { makeNavigationFunc } from "./makeNavigationFunc";
 import { Notifier } from "./Notifier";
+import { Suppressor } from "./Suppressor";
 import { unwrapLocation } from "./unwrapLocation";
 
 export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory {
@@ -22,29 +24,12 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         cacheLimit = 20,
     } = options;
 
-    const notifier = new Notifier(source);
+    const suppressor = new Suppressor();
+    const notifier = new Notifier(source, suppressor);
+    const blocker = new Blocker(source, suppressor);
 
     const push = makeNavigationFunc(source, PUSH, cacheLimit);
     const replace = makeNavigationFunc(source, REPLACE, cacheLimit);
-
-    let blockCounter = 0;
-    let lastPrompt: string | boolean | BlockPrompt | undefined;
-    let activeUnblock: UnregisterCallback | null = null;
-
-    const suppress = () => {
-        const resume = notifier.suppress();
-
-        if (activeUnblock) {
-            activeUnblock();
-            activeUnblock = null;
-            return () => {
-                activeUnblock = source.block(lastPrompt);
-                resume();
-            };
-        } else {
-            return resume;
-        }
-    };
 
     const history: IAppHistory = {
         get cacheLimit() { return cacheLimit; },
@@ -81,7 +66,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
                     try {
                         if (typeof pathOrLocation !== "undefined") {
-                            resume = suppress();
+                            resume = suppressor.suppress();
                         }
 
                         source.go(-meta.depth);
@@ -99,14 +84,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         },
 
         block(prompt?: boolean | string | BlockPrompt) {
-            activeUnblock = source.block(lastPrompt = prompt);
-            const thisCount = ++blockCounter;
-            return () => {
-                if (thisCount === blockCounter && !!activeUnblock) {
-                    activeUnblock();
-                    activeUnblock = null;
-                }
-            };
+            return blocker.block(prompt);
         },
 
         listen(listener: NavigationListener) {
