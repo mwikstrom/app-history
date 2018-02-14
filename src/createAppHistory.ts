@@ -11,6 +11,7 @@ import {
     PUSH,
     REPLACE,
     UnregisterCallback,
+    WithSuppressionAction,
 } from "./api";
 
 import { Blocker } from "./Blocker";
@@ -103,6 +104,10 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             }
         },
 
+        get isSuppressed(): boolean {
+            return suppressor.isActive;
+        },
+
         get length(): number {
             return source.length;
         },
@@ -182,8 +187,18 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             return notifier.listen(listener);
         },
 
-        suppress(): UnregisterCallback {
-            return suppressor.suppress();
+        suppress(action?: WithSuppressionAction): UnregisterCallback {
+            if (typeof action === "undefined") {
+                return suppressor.suppress();
+            } else {
+                const resume = suppressor.suppress();
+                try {
+                    action(history);
+                } finally {
+                    resume();
+                }
+                return resume;
+            }
         },
     };
 

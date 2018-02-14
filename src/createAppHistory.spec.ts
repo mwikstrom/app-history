@@ -291,5 +291,14 @@ describe("createAppHistory", () => {
             expect(history.findLast(/[abc]/)).toBe(-2);
             expect(history.location.pathname).toBe("/e");
         });
+
+        it("can invoke with suppression", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            expect(history.isSuppressed).toBe(false);
+            history.suppress(() => {
+                expect(history.isSuppressed).toBe(true);
+            });
+            expect(history.isSuppressed).toBe(false);
+        });
     });
 });
