@@ -158,14 +158,14 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             source.goForward();
         },
 
-        goHome(pathOrLocation?: string | Partial<ILocation>, state?: any) {
+        goHome(to?: string | Partial<ILocation>, state?: any) {
             if (isWrappedLocation(source.location)) {
                 const meta = source.location.state.meta;
                 if (meta.depth > 0) {
                     let resume: UnregisterCallback | null = null;
 
                     try {
-                        if (typeof pathOrLocation !== "undefined") {
+                        if (typeof to !== "undefined") {
                             resume = suppressor.suppress();
                         }
 
@@ -178,8 +178,8 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
                 }
             }
 
-            if (typeof pathOrLocation !== "undefined") {
-                replace(pathOrLocation, state);
+            if (typeof to !== "undefined") {
+                replace(to, state);
             }
         },
 
