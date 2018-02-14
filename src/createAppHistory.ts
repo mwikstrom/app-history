@@ -5,7 +5,9 @@ import {
     IAppHistory,
     IAppHistoryOptions,
     ILocation,
+    NavigationAction,
     NavigationListener,
+    PathPredicate,
     PUSH,
     REPLACE,
     UnregisterCallback,
@@ -17,6 +19,12 @@ import { makeNavigationFunc } from "./makeNavigationFunc";
 import { Notifier } from "./Notifier";
 import { Suppressor } from "./Suppressor";
 import { unwrapLocation } from "./unwrapLocation";
+
+interface IInternalFindLastResult {
+    delta: number;
+    resume: UnregisterCallback | null;
+    undo: number;
+}
 
 export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory {
     const {
@@ -31,10 +39,63 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const push = makeNavigationFunc(source, PUSH, cacheLimit);
     const replace = makeNavigationFunc(source, REPLACE, cacheLimit);
 
-    const history: IAppHistory = {
-        get cacheLimit() { return cacheLimit; },
+    const internalFindLast = (
+        match: string | RegExp | PathPredicate,
+    ): IInternalFindLastResult => {
+        const predicate: PathPredicate =
+            typeof match === "string" ? path => path === match :
+            typeof match === "function" ? match :
+            match.test.bind(match);
 
-        get depth() {
+        const result: IInternalFindLastResult = {
+            delta: 0,
+            resume: null,
+            undo: 0,
+        };
+
+        while (true) {
+            if (predicate(source.createHref(source.location))) {
+                return result;
+            }
+
+            if (!isWrappedLocation(source.location)) {
+                break;
+            }
+
+            const { cache, depth } = source.location.state.meta;
+
+            for (let index = cache.length - 1; index >= 0; --index) {
+                --result.delta;
+
+                if (predicate(cache[index])) {
+                    return result;
+                }
+            }
+
+            if (depth <= cache.length) {
+                break;
+            }
+
+            if (!result.resume) {
+                result.resume = suppressor.suppress();
+            }
+
+            const togo = cache.length + 1;
+            --result.delta;
+            result.undo += togo;
+            source.go(-togo);
+        }
+
+        result.delta = NaN;
+        return result;
+    };
+
+    const history: IAppHistory = {
+        get cacheLimit(): number {
+            return cacheLimit;
+        },
+
+        get depth(): number {
             if (isWrappedLocation(source.location)) {
                 return source.location.state.meta.depth;
             } else {
@@ -42,21 +103,55 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             }
         },
 
-        get length() { return source.length; },
+        get length(): number {
+            return source.length;
+        },
 
-        get action() { return source.action; },
+        get action(): NavigationAction {
+            return source.action;
+        },
 
-        get location() { return unwrapLocation(source.location); },
+        get location(): ILocation {
+            return unwrapLocation(source.location);
+        },
 
         push,
 
         replace,
 
-        go(delta: number) { source.go(delta); },
+        block(prompt?: boolean | string | BlockPrompt): UnregisterCallback {
+            return blocker.block(prompt);
+        },
 
-        goBack() { source.goBack(); },
+        createHref(location: Partial<ILocation>): string {
+            return source.createHref(location);
+        },
 
-        goForward() { source.goForward(); },
+        findLast(match: string | RegExp | PathPredicate): number {
+            const result = internalFindLast(match);
+
+            if (result.undo !== 0) {
+                source.go(result.undo);
+            }
+
+            if (result.resume) {
+                result.resume();
+            }
+
+            return result.delta;
+        },
+
+        go(delta: number): void {
+            source.go(delta);
+        },
+
+        goBack(): void {
+            source.goBack();
+        },
+
+        goForward(): void {
+            source.goForward();
+        },
 
         goHome(pathOrLocation?: string | Partial<ILocation>, state?: any) {
             if (isWrappedLocation(source.location)) {
@@ -83,16 +178,12 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             }
         },
 
-        block(prompt?: boolean | string | BlockPrompt) {
-            return blocker.block(prompt);
-        },
-
-        listen(listener: NavigationListener) {
+        listen(listener: NavigationListener): UnregisterCallback {
             return notifier.listen(listener);
         },
 
-        createHref(location: Partial<ILocation>): string {
-            return source.createHref(location);
+        suppress(): UnregisterCallback {
+            return suppressor.suppress();
         },
     };
 

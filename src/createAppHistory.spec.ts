@@ -194,5 +194,102 @@ describe("createAppHistory", () => {
             expect(history.depth).toBe(0);
             expect(count).toBe(1);
         });
+
+        it("can be suppressed and resumed", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+            let count = 0;
+            history.listen(() => ++count);
+            expect(count).toBe(0);
+            history.push("foo");
+            expect(count).toBe(1);
+            const resume = history.suppress();
+            history.push("bar");
+            expect(count).toBe(1);
+            resume();
+            history.push("baz");
+            expect(count).toBe(2);
+        });
+
+        it("can find delta positions in back stack", () => {
+            const history = createAppHistory({source: createMemoryHistory(), cacheLimit: 3});
+
+            expect(history.location.pathname).toBe("/");
+            expect(history.findLast("/x")).toBe(NaN);
+            expect(history.findLast("/")).toBe(0);
+            expect(history.location.pathname).toBe("/");
+
+            history.push("a");
+            history.push("b");
+            history.push("c");
+            history.push("d");
+            history.push("e");
+
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/x")).toBe(NaN);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/e")).toBe(0);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/d")).toBe(-1);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/c")).toBe(-2);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/b")).toBe(-3);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/a")).toBe(-4);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast(path => path === "/b")).toBe(-3);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast(/[abc]/)).toBe(-2);
+            expect(history.location.pathname).toBe("/e");
+        });
+
+        it("can find delta positions in back stack without any cache", () => {
+            const history = createAppHistory({source: createMemoryHistory(), cacheLimit: 0});
+
+            expect(history.location.pathname).toBe("/");
+            expect(history.findLast("/x")).toBe(NaN);
+            expect(history.findLast("/")).toBe(0);
+            expect(history.location.pathname).toBe("/");
+
+            history.push("a");
+            history.push("b");
+            history.push("c");
+            history.push("d");
+            history.push("e");
+
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/x")).toBe(NaN);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/e")).toBe(0);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/d")).toBe(-1);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/c")).toBe(-2);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/b")).toBe(-3);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast("/a")).toBe(-4);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast(path => path === "/b")).toBe(-3);
+            expect(history.location.pathname).toBe("/e");
+
+            expect(history.findLast(/[abc]/)).toBe(-2);
+            expect(history.location.pathname).toBe("/e");
+        });
     });
 });

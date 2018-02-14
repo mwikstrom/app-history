@@ -8,3 +8,4 @@ export * from "./IWrappedState";
 export * from "./NavigationAction";
 export * from "./NavigationListener";
 export * from "./UnregisterCallback";
+export * from "./PathPredicate";
