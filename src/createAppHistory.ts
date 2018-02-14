@@ -27,21 +27,22 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const push = makeNavigationFunc(source, PUSH, cacheLimit);
     const replace = makeNavigationFunc(source, REPLACE, cacheLimit);
 
-    let activeBlockCounter = 0;
-    let activePrompt: string | boolean | BlockPrompt | undefined;
+    let blockCounter = 0;
+    let lastPrompt: string | boolean | BlockPrompt | undefined;
     let activeUnblock: UnregisterCallback | null = null;
 
     const suppress = () => {
-        const resumeNotifier = notifier.suppress();
+        const resume = notifier.suppress();
 
         if (activeUnblock) {
             activeUnblock();
+            activeUnblock = null;
             return () => {
-                activeUnblock = source.block(activePrompt);
-                resumeNotifier();
+                activeUnblock = source.block(lastPrompt);
+                resume();
             };
         } else {
-            return resumeNotifier;
+            return resume;
         }
     };
 
@@ -98,10 +99,10 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         },
 
         block(prompt?: boolean | string | BlockPrompt) {
-            activeUnblock = source.block(activePrompt = prompt);
-            const blockCounter = ++activeBlockCounter;
+            activeUnblock = source.block(lastPrompt = prompt);
+            const thisCount = ++blockCounter;
             return () => {
-                if (blockCounter === activeBlockCounter && !!activeUnblock) {
+                if (thisCount === blockCounter && !!activeUnblock) {
                     activeUnblock();
                     activeUnblock = null;
                 }
