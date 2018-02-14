@@ -89,8 +89,8 @@ describe("createAppHistory", () => {
         it("can block and unblock navigation", () => {
             const history = createAppHistory({
                 source: createMemoryHistory({
-                    getUserConfirmation() {
-                        return false;
+                    getUserConfirmation(message, callback) {
+                        callback(false);
                     },
                 }),
             });
@@ -100,6 +100,7 @@ describe("createAppHistory", () => {
             history.push("bar");
             expect(history.location.pathname).toBe("/foo");
             unblock();
+            unblock(); // this has no effect
             history.push("bar");
             expect(history.location.pathname).toBe("/bar");
         });
@@ -173,6 +174,25 @@ describe("createAppHistory", () => {
             expect(history.depth).toBe(0);
             expect(sourceCount).toBe(2);
             expect(historyCount).toBe(1);
+        });
+
+        it("block prompt is only invoked once when going home to path", () => {
+            const history = createAppHistory({source: createMemoryHistory({
+                getUserConfirmation(message, callback) {
+                    callback(true);
+                },
+            })});
+            history.push("foo");
+            history.push("bar");
+            let count = 0;
+            history.block(() => {
+                ++count;
+                return "";
+            });
+            history.goHome("home");
+            expect(history.location.pathname).toBe("/home");
+            expect(history.depth).toBe(0);
+            expect(count).toBe(1);
         });
     });
 });

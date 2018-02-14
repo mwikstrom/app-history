@@ -27,7 +27,23 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const push = makeNavigationFunc(source, PUSH, cacheLimit);
     const replace = makeNavigationFunc(source, REPLACE, cacheLimit);
 
-    const suppress = () => notifier.suppress();
+    let activeBlockCounter = 0;
+    let activePrompt: string | boolean | BlockPrompt | undefined;
+    let activeUnblock: UnregisterCallback | null = null;
+
+    const suppress = () => {
+        const resumeNotifier = notifier.suppress();
+
+        if (activeUnblock) {
+            activeUnblock();
+            return () => {
+                activeUnblock = source.block(activePrompt);
+                resumeNotifier();
+            };
+        } else {
+            return resumeNotifier;
+        }
+    };
 
     const history: IAppHistory = {
         get cacheLimit() { return cacheLimit; },
@@ -82,7 +98,14 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         },
 
         block(prompt?: boolean | string | BlockPrompt) {
-            return source.block(prompt);
+            activeUnblock = source.block(activePrompt = prompt);
+            const blockCounter = ++activeBlockCounter;
+            return () => {
+                if (blockCounter === activeBlockCounter && !!activeUnblock) {
+                    activeUnblock();
+                    activeUnblock = null;
+                }
+            };
         },
 
         listen(listener: NavigationListener) {
