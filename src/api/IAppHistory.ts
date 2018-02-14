@@ -11,8 +11,8 @@ export interface IAppHistory extends IHistory {
 
     findLast(match: string | RegExp | PathPredicate): number;
 
-    goHome(path: string, state?: any): void;
-    goHome(location?: Partial<ILocation>): void;
+    goHome(to: string, state?: any): void;
+    goHome(to?: Partial<ILocation>): void;
 
     suppress(): UnregisterCallback;
     suppress(action: WithSuppressionAction): void;
