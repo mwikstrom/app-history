@@ -93,10 +93,10 @@ console.log("The app history cache limit is set to: ", history.cacheLimit);
 
 ### In-app navigation depth
 
-The `depth` property of an `app-history` object lets you know how deep into the app you've gone, and thereby how far back you can go and still remain inside the app:
+The `depth` property of an `app-history` object lets you know how deep into the app you've gone, and thereby how far back you can go and still remain inside the current app session:
 
 ```js
-console.log("We can navigate back ", history.depth, " entry/entries and still be in this app");
+console.log("We can navigate back ", history.depth, " entry/entries and still be in this app session");
 ```
 
 ### Suppressing notifications and block prompts
