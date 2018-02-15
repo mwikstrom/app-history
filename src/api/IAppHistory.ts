@@ -9,6 +9,8 @@ export interface IAppHistory extends IHistory {
     readonly depth: number;
     readonly isSuppressed: boolean;
 
+    cut(): void;
+
     findLast(match: string | RegExp | PathPredicate): number;
 
     goHome(to: string, state?: any): void;

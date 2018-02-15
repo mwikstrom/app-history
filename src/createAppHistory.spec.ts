@@ -340,5 +340,176 @@ describe("createAppHistory", () => {
             expect(history.depth).toBe(123);
             expect(history.location.state).toBe("fake");
         });
+
+        it("can cut history (clean)", () => {
+            const history = createAppHistory({source: createMemoryHistory()});
+
+            history.push("a");
+            history.push("b");
+            history.push("c");
+            history.push("d");
+            expect(history.location.pathname).toBe("/d");
+            expect(history.length).toBe(5);
+
+            history.go(-2);
+            expect(history.location.pathname).toBe("/b");
+            expect(history.length).toBe(5);
+
+            history.goForward();
+            expect(history.location.pathname).toBe("/c");
+            expect(history.length).toBe(5);
+
+            history.goBack();
+            expect(history.location.pathname).toBe("/b");
+            expect(history.length).toBe(5);
+
+            history.cut();
+            expect(history.location.pathname).toBe("/b");
+            expect(history.length).toBe(3);
+
+            history.goForward();
+            expect(history.location.pathname).toBe("/b");
+        });
+
+        it("can cut history (dirty)", () => {
+            const source = createMemoryHistory();
+            source.push("a");
+
+            const history = createAppHistory({source});
+            expect(history.location.pathname).toBe("/a");
+            expect(history.length).toBe(2);
+            expect(source.index).toBe(1);
+
+            history.push("b");
+            expect(history.location.pathname).toBe("/b");
+            expect(history.length).toBe(3);
+            expect(source.index).toBe(2);
+
+            history.goBack();
+            expect(history.location.pathname).toBe("/a");
+            expect(history.length).toBe(3);
+            expect(source.index).toBe(1);
+
+            history.cut();
+            expect(history.location.pathname).toBe("/a");
+            expect(history.length).toBe(3);
+            expect(source.index).toBe(2);
+
+            history.goForward();
+            expect(history.location.pathname).toBe("/a");
+            expect(history.length).toBe(3);
+            expect(source.index).toBe(2);
+
+            expect(source.entries[1].state.meta.cut).toBe("here");
+            expect(source.entries[2].state.meta.cut).toBe("before");
+        });
+
+        it("can go back through (and skip over) dirty cut point", () => {
+            const source = createMemoryHistory();
+            source.push("a");
+            expect(source.index).toBe(1);
+
+            const history = createAppHistory({source});
+            history.push("b");
+            expect(source.index).toBe(2);
+
+            history.goBack();
+            expect(source.index).toBe(1);
+
+            history.cut();
+            expect(source.index).toBe(2);
+
+            expect(source.entries[1].state.meta.cut).toBe("here");
+            expect(source.entries[2].state.meta.cut).toBe("before");
+
+            history.goBack();
+            expect(source.index).toBe(0);
+        });
+
+        it("can go forward through (and skip over) dirty cut point", () => {
+            const source = createMemoryHistory();
+            source.push("a");
+            expect(source.index).toBe(1);
+
+            const history = createAppHistory({source});
+            history.push("b");
+            expect(source.index).toBe(2);
+
+            history.goBack();
+            expect(source.index).toBe(1);
+
+            history.cut();
+            expect(source.index).toBe(2);
+
+            history.go(-2);
+            expect(source.index).toBe(0);
+
+            expect(source.entries[1].state.meta.cut).toBe("here");
+            expect(source.entries[2].state.meta.cut).toBe("before");
+
+            history.goForward();
+            expect(source.index).toBe(2);
+        });
+
+        it("can be initialized on dirty cut point", () => {
+            const source = createMemoryHistory();
+            source.push("a");
+            expect(source.index).toBe(1);
+
+            const history = createAppHistory({source});
+            history.push("b");
+            expect(source.index).toBe(2);
+
+            history.goBack();
+            expect(source.index).toBe(1);
+
+            history.cut();
+            expect(source.index).toBe(2);
+
+            history.go(-2);
+            expect(source.index).toBe(0);
+
+            expect(source.entries[1].state.meta.cut).toBe("here");
+            expect(source.entries[2].state.meta.cut).toBe("before");
+
+            history.suppress();
+
+            source.goForward();
+            expect(source.index).toBe(1);
+
+            createAppHistory({source});
+            expect(source.index).toBe(2);
+        });
+
+        it("can make dirty cut on tampered state", () => {
+            const source = createMemoryHistory();
+            source.push("a");
+            expect(source.index).toBe(1);
+
+            const history = createAppHistory({source});
+            history.push("b");
+            expect(source.index).toBe(2);
+
+            history.goBack();
+            expect(source.index).toBe(1);
+
+            source.replace("a", "tampered");
+            history.cut();
+            expect(source.index).toBe(2);
+
+            history.go(-2);
+            expect(source.index).toBe(0);
+
+            expect(source.entries[1].state.meta.cut).toBe("here");
+            expect(source.entries[2].state.meta.cut).toBe("before");
+
+            history.suppress();
+
+            source.goForward();
+            expect(source.index).toBe(1);
+
+            createAppHistory({source});
+            expect(source.index).toBe(2);
+        });
     });
 });

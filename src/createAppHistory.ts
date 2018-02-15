@@ -5,6 +5,7 @@ import {
     IAppHistory,
     IAppHistoryOptions,
     ILocation,
+    IWrappedState,
     NavigationAction,
     NavigationListener,
     PathPredicate,
@@ -15,6 +16,7 @@ import {
 } from "./api";
 
 import { Blocker } from "./Blocker";
+import { initialMetaState } from "./initialMetaState";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { makeNavigationFunc } from "./makeNavigationFunc";
 import { Notifier } from "./Notifier";
@@ -95,12 +97,21 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     let exposedLocation = source.location;
     let exposedAction = source.action as NavigationAction;
     let exposedDepth = 0;
+    let isAfterDirtyCut = false;
 
     if (isWrappedLocation(exposedLocation)) {
         const meta = exposedLocation.state.meta;
-        exposedDepth = meta.depth;
+
+        if (meta.cut === "here") {
+            source.goForward();
+            exposedLocation = source.location;
+            isAfterDirtyCut = true;
+        } else {
+            exposedDepth = meta.depth;
+            isAfterDirtyCut = meta.cut === "before";
+        }
+
         exposedLocation = unwrapLocation(exposedLocation);
-        // TODO: Add support for "cut here"
     } else {
         try {
             source.replace(wrapLocation(exposedLocation));
@@ -108,18 +119,84 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     }
 
     source.listen((location, action) => {
-        exposedLocation = location;
+        if (suppressor.isActive) {
+            return;
+        }
+
         exposedAction = action;
 
-        if (isWrappedLocation(exposedLocation)) {
-            const meta = exposedLocation.state.meta;
+        if (isWrappedLocation(location)) {
+            let meta = location.state.meta;
+
+            if (meta.cut === "here") {
+                const resume = suppressor.suppress();
+
+                try {
+                    if ((exposedDepth > meta.depth) || (exposedDepth === meta.depth && isAfterDirtyCut)) {
+                        source.goBack();
+                    } else {
+                        source.goForward();
+                    }
+                } finally {
+                    resume();
+                }
+
+                meta = initialMetaState();
+
+                if (isWrappedLocation(location = source.location)) {
+                    meta = location.state.meta;
+                }
+            }
+
             exposedDepth = meta.depth;
-            exposedLocation = unwrapLocation(exposedLocation);
-            // TODO: Add support for "cut here"
+            isAfterDirtyCut = meta.cut === "before";
         } else {
             exposedDepth = 0;
+            isAfterDirtyCut = false;
         }
+
+        exposedLocation = unwrapLocation(location);
     });
+
+    const canMakeCleanCut = () => {
+        let ok = false;
+
+        if (isWrappedLocation(source.location)) {
+            const { depth, cut } = source.location.state.meta;
+            ok = depth > 0 || cut === "before";
+        }
+
+        return ok;
+    };
+
+    const makeCleanCut = () => {
+        const curr = source.location;
+        source.goBack();
+        source.push(curr);
+    };
+
+    const createDirtyCut = (
+        curr: ILocation<IWrappedState>,
+        cut: "before" | "here",
+    ): ILocation<IWrappedState> => ({
+        ...curr,
+        state: {
+            ...curr.state,
+            meta: {
+                ...curr.state.meta,
+                cut,
+            },
+        },
+    });
+
+    const makeDirtyCut = () => {
+        const curr = isWrappedLocation(source.location) ? source.location : wrapLocation(source.location);
+        const next = createDirtyCut(curr, "before");
+        const prev = createDirtyCut(curr, "here");
+        source.replace(prev);
+        source.push(next);
+        isAfterDirtyCut = true;
+    };
 
     const history: IAppHistory = {
         get cacheLimit(): number {
@@ -149,6 +226,19 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         push,
 
         replace,
+
+        cut(): void {
+            const resume = suppressor.suppress();
+            try {
+                if (canMakeCleanCut()) {
+                    makeCleanCut();
+                } else {
+                    makeDirtyCut();
+                }
+            } finally {
+                resume();
+            }
+        },
 
         block(prompt?: boolean | string | BlockPrompt): UnregisterCallback {
             return blocker.block(prompt);
