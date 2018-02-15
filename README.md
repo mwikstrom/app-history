@@ -38,7 +38,7 @@ const history = AppHistory.createAppHistory();
 If you want to provide another underlying history object you can do so (however, it is strongly recommended that you only access the underlying history object via the newly returned `app-history` extension to avoid confusion):
 
 ```js
-const history = AppHistory.createAppHistory({
+const history = createAppHistory({
     source: myHistoryObject
 });
 ```
@@ -48,7 +48,7 @@ const history = AppHistory.createAppHistory({
 `app-history` will internally store some meta information in HTML5 History API state objects. One piece of information is a cache of app-specific paths in the history back stack. By default, the cache is limited to 20 entries. If you want to change this you can do so:
 
 ```js
-const history = AppHistory.createAppHistory({
+const history = createAppHistory({
     cacheLimit: 5 // Keep at most five paths cached in my state objects
 });
 ```
@@ -56,7 +56,7 @@ const history = AppHistory.createAppHistory({
 If you want to disable caching:
 
 ```js
-const history = AppHistory.createAppHistory({
+const history = createAppHistory({
     cacheLimit: 0 // No cached paths in my state objects
 });
 ```
@@ -64,9 +64,53 @@ const history = AppHistory.createAppHistory({
 Or if you want to let the cache grow indefinately:
 
 ```js
-const history = AppHistory.createAppHistory({
+const history = createAppHistory({
     cacheLimit: -1 // Cache 'em all!
 });
+```
+
+You can read the currect cache limit like this:
+
+```js
+console.log("The app history cache limit is set to: ", history.cacheLimit);
+```
+
+### In-app navigation depth
+
+The `depth` property of an `app-history` object lets you know how deep into the app you've gone, and thereby how far back you can go and still remain inside the app:
+
+```js
+console.log("We can navigate back ", history.depth, " entry/entries and still be in this app");
+```
+
+### Suppressing notifications and block prompts
+
+An [`history`][history] object lets you listen on location changes and conditionally block transitions, using `listen` and `block` respectively.
+
+If you which to temporarily pause notifications and prompts you can do:
+
+```js
+const resume = history.suppress();
+
+// this will not notify listeners or invoke block prompt
+history.pushState("foo", "bar");
+
+// resume normal processing when you're done with the secret stuff
+resume();
+```
+
+Or using a callback action:
+
+```js
+history.suppress(() => {
+    // code in this callback won't notify listeners or invoke block prompt
+});
+```
+
+You can at any time determine whether notifications and prompts are being suppressed:
+
+```js
+console.log("Suppression is ", history.isSuppressed ? "active" : "inactive");
 ```
 
 <!-- TODO: Usage -->
