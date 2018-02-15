@@ -3,6 +3,10 @@
 
 `app-history` is an extension to [`history`][history] designed for use in progressive web apps. The API is a superset of [`history`][history] so you can use it as a drop-in replacement in [`react-router`][react-router] for example. TypeScript definitions are included.
 
+## Objective
+
+**TODO**
+
 ## Installation
 
 ```
@@ -75,6 +79,18 @@ You can read the currect cache limit like this:
 console.log("The app history cache limit is set to: ", history.cacheLimit);
 ```
 
+### Cutting history
+
+**TODO**
+
+### Going back
+
+**TODO**
+
+### Going home
+
+**TODO**
+
 ### In-app navigation depth
 
 The `depth` property of an `app-history` object lets you know how deep into the app you've gone, and thereby how far back you can go and still remain inside the app:
@@ -129,9 +145,9 @@ And these extension methods:
 * `goHome`
 * `suppress` (when using a callback function)
 
-<!-- TODO: Usage -->
-<!-- TODO: Why? -->
-<!-- TODO: How? -->
+### Inspecting the in-app back stack
+
+**TODO**
 
 [travis-badge]: https://img.shields.io/travis/mwikstrom/app-history.svg?style=flat-square
 [travis]: https://travis-ci.org/mwikstrom/app-history
