@@ -23,7 +23,7 @@ function nextMetaCore(
     switch (action) {
         case PUSH: return afterPush(meta, path);
         case POP: return afterPop(meta);
-        default: return afterReplace(meta, path);
+        default: return afterReplace(meta);
     }
 }
 
@@ -35,10 +35,16 @@ function applyCacheLimit(meta: IMetaState, limit: number) {
 }
 
 function afterPush(meta: IMetaState, path: string): IMetaState {
-    return {
+    const next: IMetaState = {
         cache: meta.cache.concat(path),
         depth: meta.depth + 1,
     };
+
+    if (meta.cut === "here") {
+        next.cut = "before";
+    }
+
+    return next;
 }
 
 function afterPop(meta: IMetaState): IMetaState {
@@ -48,13 +54,10 @@ function afterPop(meta: IMetaState): IMetaState {
     };
 }
 
-function afterReplace(meta: IMetaState, path: string): IMetaState {
-    if (meta.depth > 0) {
-        return {
-            cache: meta.cache.slice(0, -1).concat(path),
-            depth: meta.depth,
-        };
-    } else {
-        return meta;
-    }
+function afterReplace(meta: IMetaState): IMetaState {
+    return {
+        cache: meta.cache.slice(),
+        cut: meta.cut,
+        depth: meta.depth,
+    };
 }

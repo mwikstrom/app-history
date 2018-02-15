@@ -1,6 +1,6 @@
 import { createMemoryHistory } from "history";
 
-import { POP, PUSH, REPLACE } from "./api";
+import { IMetaState, POP, PUSH, REPLACE } from "./api";
 import { initialMetaState } from "./initialMetaState";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { nextMetaState } from "./nextMetaState";
@@ -58,6 +58,24 @@ describe("nextMetaState", () => {
         });
     });
 
+    it("can push with cut", () => {
+        const source = createMemoryHistory();
+        const initialState: IMetaState = {
+            cache: ["/foo", "/bar"],
+            cut: "here",
+            depth: 123,
+        };
+
+        source.replace("baz", wrapState(null, initialState));
+        const nextState = nextMetaState(source, PUSH, -1);
+
+        expect(nextState).toMatchObject({
+            cache: ["/foo", "/bar", "/baz"],
+            cut: "before",
+            depth: 124,
+        });
+    });
+
     it("can replace", () => {
         const source = createMemoryHistory();
         const initialState = {
@@ -69,7 +87,43 @@ describe("nextMetaState", () => {
         const nextState = nextMetaState(source, REPLACE, -1);
 
         expect(nextState).toMatchObject({
-            cache: ["/foo", "/baz"],
+            cache: ["/foo", "/bar"],
+            depth: 123,
+        });
+    });
+
+    it("can replace with cut here", () => {
+        const source = createMemoryHistory();
+        const initialState: IMetaState = {
+            cache: ["/foo", "/bar"],
+            cut: "here",
+            depth: 123,
+        };
+
+        source.replace("baz", wrapState(null, initialState));
+        const nextState = nextMetaState(source, REPLACE, -1);
+
+        expect(nextState).toMatchObject({
+            cache: ["/foo", "/bar"],
+            cut: "here",
+            depth: 123,
+        });
+    });
+
+    it("can replace with cut before", () => {
+        const source = createMemoryHistory();
+        const initialState: IMetaState = {
+            cache: ["/foo", "/bar"],
+            cut: "before",
+            depth: 123,
+        };
+
+        source.replace("baz", wrapState(null, initialState));
+        const nextState = nextMetaState(source, REPLACE, -1);
+
+        expect(nextState).toMatchObject({
+            cache: ["/foo", "/bar"],
+            cut: "before",
             depth: 123,
         });
     });
