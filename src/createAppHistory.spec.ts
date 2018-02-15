@@ -511,5 +511,243 @@ describe("createAppHistory", () => {
             createAppHistory({source});
             expect(source.index).toBe(2);
         });
+
+        it("can go back to matched pattern", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            expect(history.goBack(/[ab]/)).toBe(true);
+
+            expect(source.index).toBe(2);
+            expect(history.location.pathname).toBe("/b");
+            expect(history.location.state).toBe("foobar");
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to matched pattern (no cache)", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source, cacheLimit: 0});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            expect(history.goBack(/[ab]/)).toBe(true);
+
+            expect(source.index).toBe(2);
+            expect(history.location.pathname).toBe("/b");
+            expect(history.location.state).toBe("foobar");
+            expect(changes).toBe(1);
+        });
+
+        it("cannot go back to unmatched pattern", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            expect(history.goBack(/[x]/)).toBe(false);
+
+            expect(source.index).toBe(4);
+            expect(history.location.pathname).toBe("/d");
+            expect(changes).toBe(0);
+        });
+
+        it("cannot go back to unmatched pattern (nocache)", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source, cacheLimit: 0});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            expect(history.goBack(/[x]/)).toBe(false);
+
+            expect(source.index).toBe(4);
+            expect(history.location.pathname).toBe("/d");
+            expect(changes).toBe(0);
+        });
+
+        it("can go back to specific path", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack("/b");
+
+            expect(source.index).toBe(2);
+            expect(history.location.pathname).toBe("/b");
+            expect(history.location.state).toBe("foobar");
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to specific path and state", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack("/b", "fubar");
+
+            expect(source.index).toBe(2);
+            expect(history.location.pathname).toBe("/b");
+            expect(history.location.state).toBe("fubar");
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to specific location without state", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack({ pathname: "/b" });
+
+            expect(source.index).toBe(2);
+            expect(history.location.pathname).toBe("/b");
+            expect(history.location.state).toBe("foobar");
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to specific location with state", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack({ pathname: "/b", state: "fubar" });
+
+            expect(source.index).toBe(2);
+            expect(history.location.pathname).toBe("/b");
+            expect(history.location.state).toBe("fubar");
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to unmatched path", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack("/x");
+
+            expect(source.index).toBe(0);
+            expect(history.location.pathname).toBe("/x");
+            expect(history.location.state).toBeUndefined();
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to unmatched path and state", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack("/x", "fubar");
+
+            expect(source.index).toBe(0);
+            expect(history.location.pathname).toBe("/x");
+            expect(history.location.state).toBe("fubar");
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to unmatched location without state", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack({ pathname: "/x" });
+
+            expect(source.index).toBe(0);
+            expect(history.location.pathname).toBe("/x");
+            expect(history.location.state).toBeUndefined();
+            expect(changes).toBe(1);
+        });
+
+        it("can go back to unmatched location with state", () => {
+            const source = createMemoryHistory();
+            const history = createAppHistory({source});
+
+            history.push("/a");
+            history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            history.push("/c");
+            history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            history.goBack({ pathname: "/x", state: "fubar" });
+
+            expect(source.index).toBe(0);
+            expect(history.location.pathname).toBe("/x");
+            expect(history.location.state).toBe("fubar");
+            expect(changes).toBe(1);
+        });
     });
 });

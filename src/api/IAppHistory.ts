@@ -15,7 +15,9 @@ export interface IAppHistory extends IHistory {
 
     go(delta: number): IAppHistory;
 
-    goBack(): IAppHistory;
+    goBack(to?: RegExp | PathPredicate): boolean;
+    goBack(to: string, state?: any): IAppHistory;
+    goBack(to?: Partial<ILocation>): IAppHistory;
 
     goForward(): IAppHistory;
 

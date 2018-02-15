@@ -42,18 +42,27 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const blocker = new Blocker(source, suppressor);
 
     const internalFindLast = (
-        match: string | RegExp | PathPredicate,
+        match?: string | RegExp | PathPredicate | Partial<ILocation>,
     ): IInternalFindLastResult => {
-        const predicate: PathPredicate =
-            typeof match === "string" ? path => path === match :
-            typeof match === "function" ? match :
-            match.test.bind(match);
-
         const result: IInternalFindLastResult = {
             delta: 0,
             resume: null,
             undo: 0,
         };
+
+        if (typeof match === "undefined") {
+            result.delta = -1;
+            return result;
+        }
+
+        if (typeof match === "object" && !(match instanceof RegExp)) {
+            match = source.createHref(match);
+        }
+
+        const predicate: PathPredicate =
+            typeof match === "string" ? path => path === match :
+            typeof match === "function" ? match :
+            match.test.bind(match);
 
         while (true) {
             if (predicate(source.createHref(source.location))) {
@@ -83,7 +92,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             }
 
             const togo = cache.length + 1;
-            --result.delta;
+            result.delta += cache.length;
             result.undo += togo;
             source.go(-togo);
         }
@@ -238,6 +247,68 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         }
     }
 
+    const distanceToHome = () =>
+        isWrappedLocation(source.location) ? -source.location.state.meta.depth : 0;
+
+    function goBack(to?: RegExp | PathPredicate): boolean;
+    function goBack(to: string, state?: any): IAppHistory;
+    function goBack(to?: Partial<ILocation>): IAppHistory;
+    function goBack(
+        to?: string | Partial<ILocation> | RegExp | PathPredicate,
+        state?: any,
+    ): IAppHistory | boolean {
+        const isFuzzy = to instanceof RegExp || typeof to === "function";
+
+        if (typeof to === "object" && !(to instanceof RegExp)) {
+            state = to.state;
+        }
+
+        const found = internalFindLast(to);
+        let willReplace = typeof state !== "undefined";
+        let forcePath: string | null = null;
+
+        if (isNaN(found.delta)) {
+            if (isFuzzy) {
+                if (found.undo) {
+                    source.go(found.undo);
+                }
+
+                if (found.resume) {
+                    found.resume();
+                }
+
+                return false;
+            }
+
+            found.delta = distanceToHome();
+            willReplace = true;
+            forcePath = typeof to === "string" ? to : source.createHref(to as Partial<ILocation>);
+        }
+
+        if (found.resume && !willReplace) {
+            found.resume();
+        } else if (!found.resume && willReplace) {
+            found.resume = suppressor.suppress();
+        }
+
+        source.go(found.delta);
+
+        if (willReplace) {
+            found.resume!();
+
+            if (typeof forcePath === "string") {
+                source.replace(forcePath, state);
+            } else {
+                source.replace({
+                    ...source.location,
+                    state,
+                });
+            }
+        }
+
+        return isFuzzy ? true : history;
+    }
+
     const history: IAppHistory = {
         get cacheLimit(): number {
             return cacheLimit;
@@ -292,6 +363,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
             if (result.undo !== 0) {
                 source.go(result.undo);
+                result.delta -= result.undo;
             }
 
             if (result.resume) {
@@ -306,10 +378,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             return history;
         },
 
-        goBack(): IAppHistory {
-            source.goBack();
-            return history;
-        },
+        goBack,
 
         goForward(): IAppHistory {
             source.goForward();
@@ -320,21 +389,20 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             to?: string | Partial<ILocation>,
             state?: any,
         ): IAppHistory {
-            if (isWrappedLocation(source.location)) {
-                const meta = source.location.state.meta;
-                if (meta.depth > 0) {
-                    let resume: UnregisterCallback | null = null;
+            const delta = distanceToHome();
 
-                    try {
-                        if (typeof to !== "undefined") {
-                            resume = suppressor.suppress();
-                        }
+            if (delta !== 0) {
+                let resume: UnregisterCallback | null = null;
 
-                        source.go(-meta.depth);
-                    } finally {
-                        if (resume) {
-                            resume();
-                        }
+                try {
+                    if (typeof to !== "undefined") {
+                        resume = suppressor.suppress();
+                    }
+
+                    source.go(delta);
+                } finally {
+                    if (resume) {
+                        resume();
                     }
                 }
             }
