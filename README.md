@@ -113,6 +113,22 @@ You can at any time determine whether notifications and prompts are being suppre
 console.log("Suppression is ", history.isSuppressed ? "active" : "inactive");
 ```
 
+### Invocation chaining
+
+`app-history` lets you use invocation chaining on all methods that would otherwise return void. 
+
+This includes the following methods from [`history`][history]:
+* `go`
+* `goBack`
+* `goForward`
+* `push`
+* `replace`
+
+And these extension methods:
+* `cut`
+* `goHome`
+* `suppress` (when using a callback function)
+
 <!-- TODO: Usage -->
 <!-- TODO: Why? -->
 <!-- TODO: How? -->
