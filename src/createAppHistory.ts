@@ -257,7 +257,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         to?: string | Partial<ILocation> | RegExp | PathPredicate,
         state?: any,
     ): IAppHistory | boolean {
-        const isFuzzy = to instanceof RegExp || typeof to === "function";
+        const conditional = to instanceof RegExp || typeof to === "function";
 
         if (typeof to === "object" && !(to instanceof RegExp)) {
             state = to.state;
@@ -268,7 +268,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         let forcePath: string | null = null;
 
         if (isNaN(found.delta)) {
-            if (isFuzzy) {
+            if (conditional) {
                 if (found.undo) {
                     source.go(found.undo);
                 }
@@ -306,7 +306,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             }
         }
 
-        return isFuzzy ? true : history;
+        return conditional ? true : history;
     }
 
     const history: IAppHistory = {
