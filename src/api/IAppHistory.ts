@@ -9,13 +9,25 @@ export interface IAppHistory extends IHistory {
     readonly depth: number;
     readonly isSuppressed: boolean;
 
-    cut(): void;
+    cut(): IAppHistory;
 
     findLast(match: string | RegExp | PathPredicate): number;
 
-    goHome(to: string, state?: any): void;
-    goHome(to?: Partial<ILocation>): void;
+    go(delta: number): IAppHistory;
+
+    goBack(): IAppHistory;
+
+    goForward(): IAppHistory;
+
+    goHome(to: string, state?: any): IAppHistory;
+    goHome(to?: Partial<ILocation>): IAppHistory;
+
+    push(path: string, state?: any): IAppHistory;
+    push(location: Partial<ILocation>): IAppHistory;
+
+    replace(path: string, state?: any): IAppHistory;
+    replace(location: Partial<ILocation>): IAppHistory;
 
     suppress(): UnregisterCallback;
-    suppress(action: WithSuppressionAction): void;
+    suppress(action: WithSuppressionAction): IAppHistory;
 }

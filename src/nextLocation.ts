@@ -4,9 +4,9 @@ import { nextState } from "./nextState";
 export function nextLocation(
     source: IHistory,
     action: NavigationAction,
-    location: ILocation,
+    location: Partial<ILocation>,
     cacheLimit: number,
-): ILocation<IWrappedState> {
+): Partial<ILocation<IWrappedState>> {
     return {
         hash: location.hash,
         key: location.key,

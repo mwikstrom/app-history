@@ -18,7 +18,8 @@ import {
 import { Blocker } from "./Blocker";
 import { initialMetaState } from "./initialMetaState";
 import { isWrappedLocation } from "./isWrappedLocation";
-import { makeNavigationFunc } from "./makeNavigationFunc";
+import { nextLocation } from "./nextLocation";
+import { nextState } from "./nextState";
 import { Notifier } from "./Notifier";
 import { Suppressor } from "./Suppressor";
 import { unwrapLocation } from "./unwrapLocation";
@@ -39,9 +40,6 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const suppressor = new Suppressor();
     const notifier = new Notifier(source, suppressor);
     const blocker = new Blocker(source, suppressor);
-
-    const push = makeNavigationFunc(source, PUSH, cacheLimit);
-    const replace = makeNavigationFunc(source, REPLACE, cacheLimit);
 
     const internalFindLast = (
         match: string | RegExp | PathPredicate,
@@ -198,6 +196,48 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         isAfterDirtyCut = true;
     };
 
+    const push = (
+        pathOrDescriptor: string | Partial<ILocation>,
+        state?: any,
+    ): IAppHistory => {
+        if (typeof pathOrDescriptor === "string") {
+            source.push(pathOrDescriptor, nextState(source, PUSH, state, cacheLimit));
+        } else {
+            source.push(nextLocation(source, PUSH, pathOrDescriptor, cacheLimit));
+        }
+
+        return history;
+    };
+
+    const replace = (
+        pathOrDescriptor: string | Partial<ILocation>,
+        state?: any,
+    ): IAppHistory => {
+        if (typeof pathOrDescriptor === "string") {
+            source.replace(pathOrDescriptor, nextState(source, REPLACE, state, cacheLimit));
+        } else {
+            source.replace(nextLocation(source, REPLACE, pathOrDescriptor, cacheLimit));
+        }
+
+        return history;
+    };
+
+    function suppress(): UnregisterCallback;
+    function suppress(action: WithSuppressionAction): IAppHistory;
+    function suppress(action?: WithSuppressionAction): UnregisterCallback | IAppHistory {
+        if (typeof action === "undefined") {
+            return suppressor.suppress();
+        } else {
+            const resume = suppressor.suppress();
+            try {
+                action(history);
+            } finally {
+                resume();
+            }
+            return history;
+        }
+    }
+
     const history: IAppHistory = {
         get cacheLimit(): number {
             return cacheLimit;
@@ -223,12 +263,9 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             return exposedLocation;
         },
 
-        push,
-
-        replace,
-
-        cut(): void {
+        cut(): IAppHistory {
             const resume = suppressor.suppress();
+
             try {
                 if (canMakeCleanCut()) {
                     makeCleanCut();
@@ -238,6 +275,8 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             } finally {
                 resume();
             }
+
+            return history;
         },
 
         block(prompt?: boolean | string | BlockPrompt): UnregisterCallback {
@@ -262,19 +301,25 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             return result.delta;
         },
 
-        go(delta: number): void {
+        go(delta: number): IAppHistory {
             source.go(delta);
+            return history;
         },
 
-        goBack(): void {
+        goBack(): IAppHistory {
             source.goBack();
+            return history;
         },
 
-        goForward(): void {
+        goForward(): IAppHistory {
             source.goForward();
+            return history;
         },
 
-        goHome(to?: string | Partial<ILocation>, state?: any) {
+        goHome(
+            to?: string | Partial<ILocation>,
+            state?: any,
+        ): IAppHistory {
             if (isWrappedLocation(source.location)) {
                 const meta = source.location.state.meta;
                 if (meta.depth > 0) {
@@ -297,25 +342,19 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             if (typeof to !== "undefined") {
                 replace(to, state);
             }
+
+            return history;
         },
 
         listen(listener: NavigationListener): UnregisterCallback {
             return notifier.listen(listener);
         },
 
-        suppress(action?: WithSuppressionAction): UnregisterCallback {
-            if (typeof action === "undefined") {
-                return suppressor.suppress();
-            } else {
-                const resume = suppressor.suppress();
-                try {
-                    action(history);
-                } finally {
-                    resume();
-                }
-                return resume;
-            }
-        },
+        push,
+
+        replace,
+
+        suppress,
     };
 
     Object.freeze(history);
