@@ -24,7 +24,7 @@ const history = createAppHistory();
 
 ----------
 
-Or from the [Unpkg](unpkg) CDN using vanilla HTML and JavaScript:
+Alternatively, you can load it directly from the [UNPKG][unpkg] CDN using vanilla HTML and JavaScript:
 
 ```html
 <script src="https://unpkg.com/history/umd/history.min.js"></script>
@@ -167,3 +167,4 @@ console.log("The app history cache limit is set to: ", history.cacheLimit);
 [react-router]: https://github.com/ReactTraining/react-router
 [npm]: https://www.npmjs.com/
 [webpack]: https://webpack.github.io/
+[unpkg]: https://unpkg.com/
