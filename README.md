@@ -22,6 +22,30 @@ import { createAppHistory } from "app-history";
 const history = createAppHistory();
 ```
 
+Use it with [`react-router`][react-router] something like this:
+
+```jsx
+import * as React from "react";
+import { render } from "react-dom";
+import { Router } from "react-router";
+import { createAppHistory } from "app-history";
+
+import { App } from "./App";
+
+const history = createAppHistory();
+
+const root = document.createElement("div");
+document.body.appendChild(root);
+
+render(
+    <Router history={history}>
+        <App/>
+    </Router>,
+    root
+);
+```
+
+
 ----------
 
 Alternatively, you can load it directly from the [UNPKG][unpkg] CDN using vanilla HTML and JavaScript:
