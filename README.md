@@ -30,13 +30,17 @@ import { render } from "react-dom";
 import { Router } from "react-router";
 import { createAppHistory } from "app-history";
 
-import { App } from "./App";
+import { App } from "./App"; // Your app root component
 
+// Create App History object (extending Browser History)
 const history = createAppHistory();
 
+// Create a <div> that will host the App component
 const root = document.createElement("div");
 document.body.appendChild(root);
 
+// Tell React to render our app. Wrap it inside a Router component
+// which is configured to use the App History object.
 render(
     <Router history={history}>
         <App/>
