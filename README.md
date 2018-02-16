@@ -9,85 +9,47 @@
 
 ## Installation
 
+Using [NPM](npm) and a bundler (like [webpack][webpack]):
+
 ```
 npm install --save app-history
 ```
 
-Or, if you're not using a bundler you can load it into the browser directly as an UMD package. Notice that you'll have to load the [`history`][history] UMD package too:
-
-```html
-<script src="https://unpkg.com/history/umd/history.min.js"></script>
-<script src="https://unpkg.com/app-history/dist/app-history.js"></script>
-```
-
-## Usage
-
-### Create an App History object
-
-If you are using a bundler and NPM:
+Then create an App History object in your code like this:
 
 ```js
 import { createAppHistory } from "app-history";
 const history = createAppHistory();
 ```
 
-Or, if you've loaded it as an UMD package:
+----------
+
+Or from the [Unpkg](unpkg) CDN using vanilla HTML and JavaScript:
+
+```html
+<script src="https://unpkg.com/history/umd/history.min.js"></script>
+<script src="https://unpkg.com/app-history/dist/app-history.js"></script>
+```
+
+(Notice that you'll have to load the [`history`][history] UMD package too)
+
+Then create an App History object in your code like this:
 
 ```js
 const history = AppHistory.createAppHistory();
 ```
 
-`createAppHistory` will, by default, create a new browser history using `createBrowserHistory` from the [`history`][history] package.
-
-If you want to provide another underlying history object you can do so (however, it is strongly recommended that you only access the underlying history object via the newly returned `app-history` extension to avoid confusion):
-
-```js
-const history = createAppHistory({
-    source: myHistoryObject
-});
-```
-
-`app-history` is based on HTML5 History API state objects. So make sure that the underlying history object has support for that.
-
-`app-history` will internally store some meta information in HTML5 History API state objects. One piece of information is a cache of app-specific paths in the history back stack. By default, the cache is limited to 20 entries. If you want to change this you can do so:
-
-```js
-const history = createAppHistory({
-    cacheLimit: 5 // Keep at most five paths cached in my state objects
-});
-```
-
-If you want to disable caching:
-
-```js
-const history = createAppHistory({
-    cacheLimit: 0 // No cached paths in my state objects
-});
-```
-
-Or if you want to let the cache grow indefinately:
-
-```js
-const history = createAppHistory({
-    cacheLimit: -1 // Cache 'em all!
-});
-```
-
-You can read the currect cache limit like this:
-
-```js
-console.log("The app history cache limit is set to: ", history.cacheLimit);
-```
-
-### Cutting history
-
-**TODO**
+## Usage
 
 ### Going back
 
 **TODO**
 
 ### Going home
+
+**TODO**
+
+### Cutting history
 
 **TODO**
 
@@ -149,6 +111,52 @@ And these extension methods:
 
 **TODO**
 
+### Use a custom underlying history object
+
+`createAppHistory` will, by default, create a new browser history using `createBrowserHistory` from the [`history`][history] package.
+
+If you want to provide another underlying history object you can do so (however, it is strongly recommended that you only access the underlying history object via the newly returned `app-history` extension to avoid confusion):
+
+```js
+const history = createAppHistory({
+    source: myHistoryObject
+});
+```
+
+`app-history` is based on HTML5 History API state objects. So make sure that the underlying history object has support for that.
+
+### Configure the internal cache limit
+
+`app-history` will internally store some meta information in HTML5 History API state objects. One piece of information is a cache of app-specific paths in the history back stack. By default, the cache is limited to 20 entries. If you want to change this you can do so:
+
+```js
+const history = createAppHistory({
+    cacheLimit: 5 // Keep at most five paths cached in my state objects
+});
+```
+
+If you want to disable caching:
+
+```js
+const history = createAppHistory({
+    cacheLimit: 0 // No cached paths in my state objects
+});
+```
+
+Or if you want to let the cache grow indefinately:
+
+```js
+const history = createAppHistory({
+    cacheLimit: -1 // Cache 'em all!
+});
+```
+
+You can read the currect cache limit like this:
+
+```js
+console.log("The app history cache limit is set to: ", history.cacheLimit);
+```
+
 [travis-badge]: https://img.shields.io/travis/mwikstrom/app-history.svg?style=flat-square
 [travis]: https://travis-ci.org/mwikstrom/app-history
 [coveralls-badge]: https://img.shields.io/coveralls/github/mwikstrom/app-history.svg?style=flat-square
@@ -157,3 +165,5 @@ And these extension methods:
 [npm]: https://www.npmjs.org/package/app-history
 [history]: https://github.com/ReactTraining/history
 [react-router]: https://github.com/ReactTraining/react-router
+[npm]: https://www.npmjs.com/
+[webpack]: https://webpack.github.io/
