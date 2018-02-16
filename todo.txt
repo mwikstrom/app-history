@@ -1,0 +1,3 @@
+[ ] Must use Async methods to await location change
+[ ] Maybe auto-load "promise" dependency?
+[ ] UMD build should support createAppHistory() without source (using History.createBrowserHistory and maybe auto-load History as dependency)
