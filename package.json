@@ -18,8 +18,9 @@
     "url": "https://github.com/mwikstrom/app-history.git"
   },
   "keywords": [
+    "progressive-web-app",
     "history",
-    "location"
+    "routing"
   ],
   "author": "Mårten Wikström",
   "license": "MIT",
