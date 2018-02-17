@@ -1,3 +1,5 @@
-[ ] Must use Async methods to await location change
+[x] Must use Async methods to await location change
+[ ] Update readme with new async api
+[ ] Allow cut directly in goBack and goHome (use options object)
 [ ] Maybe auto-load "promise" dependency?
 [ ] UMD build should support createAppHistory() without source (using History.createBrowserHistory and maybe auto-load History as dependency)
