@@ -1,3 +1,3 @@
 import { IAppHistory } from "./IAppHistory";
 
-export type WithSuppressionAction = (history: IAppHistory) => void;
+export type WithSuppressionAction = (history: IAppHistory) => void | Promise<void>;

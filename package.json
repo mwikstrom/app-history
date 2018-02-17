@@ -7,6 +7,8 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:nocoverage": "jest --coverage false",
+    "test:debug": "jest --coverage false -t __DEBUG__",
     "build": "webpack",
     "lint": "tslint --format stylish src/*.ts src/**/*.ts",
     "lint:fix": "tslint --format stylish --fix src/*.ts src/**/*.ts",
@@ -49,7 +51,7 @@
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
-    "testRegex": "src/.*\\.spec\\.ts$",
+    "testRegex": "\\.spec\\.ts$",
     "moduleFileExtensions": [
       "ts",
       "js",

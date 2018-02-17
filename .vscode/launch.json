@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest All",
+      "program": "${workspaceRoot}/node_modules/jest/bin/jest",
+      "args": ["--runInBand", "--coverage", "false"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest __DEBUG__",
+      "program": "${workspaceRoot}/node_modules/jest/bin/jest",
+      "args": ["--runInBand", "--coverage", "false", "-t", "__DEBUG__"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}

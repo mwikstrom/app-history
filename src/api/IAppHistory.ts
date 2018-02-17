@@ -8,28 +8,28 @@ export interface IAppHistory extends IHistory {
     readonly cacheLimit: number;
     readonly depth: number;
     readonly isSuppressed: boolean;
+    readonly source: IHistory;
 
-    cut(): IAppHistory;
+    cut(): Promise<void>;
 
-    findLast(match: string | RegExp | PathPredicate): number;
+    findLast(match: string | RegExp | PathPredicate): Promise<number>;
 
-    go(delta: number): IAppHistory;
+    go(delta: number): Promise<void>;
 
-    goBack(to?: RegExp | PathPredicate): boolean;
-    goBack(to: string, state?: any): IAppHistory;
-    goBack(to?: Partial<ILocation>): IAppHistory;
+    goBack(to: string, state?: any): Promise<boolean>;
+    goBack(to?: Partial<ILocation> | RegExp | PathPredicate): Promise<boolean>;
 
-    goForward(): IAppHistory;
+    goForward(): Promise<void>;
 
-    goHome(to: string, state?: any): IAppHistory;
-    goHome(to?: Partial<ILocation>): IAppHistory;
+    goHome(to: string, state?: any): Promise<void>;
+    goHome(to?: Partial<ILocation>): Promise<void>;
 
-    push(path: string, state?: any): IAppHistory;
-    push(location: Partial<ILocation>): IAppHistory;
+    push(path: string, state?: any): Promise<void>;
+    push(location: Partial<ILocation>): Promise<void>;
 
-    replace(path: string, state?: any): IAppHistory;
-    replace(location: Partial<ILocation>): IAppHistory;
+    replace(path: string, state?: any): Promise<void>;
+    replace(location: Partial<ILocation>): Promise<void>;
 
     suppress(): UnregisterCallback;
-    suppress(action: WithSuppressionAction): IAppHistory;
+    suppress(action: WithSuppressionAction): Promise<void>;
 }

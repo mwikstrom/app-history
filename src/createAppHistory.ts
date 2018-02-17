@@ -1,9 +1,10 @@
-import { createBrowserHistory } from "history";
+import { createBrowserHistory, createMemoryHistory } from "history";
 
 import {
     BlockPrompt,
     IAppHistory,
     IAppHistoryOptions,
+    IHistory,
     ILocation,
     IWrappedState,
     NavigationAction,
@@ -12,6 +13,7 @@ import {
     PUSH,
     REPLACE,
     UnregisterCallback,
+    UserConfirmation,
     WithSuppressionAction,
 } from "./api";
 
@@ -31,19 +33,87 @@ interface IInternalFindLastResult {
     undo: number;
 }
 
-export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory {
+export async function createAppHistory(options: IAppHistoryOptions = {}): Promise<IAppHistory> {
     const {
-        source = createBrowserHistory(),
+        sourceType = "browser",
+        getUserConfirmation,
         cacheLimit = 20,
     } = options;
 
+    let rejectUpdate: ((reason: Error) => void) | null = null;
+
+    const onBlocked = () => {
+        if (rejectUpdate) {
+            rejectUpdate(new Error("app-history: navigation was blocked"));
+        }
+    };
+
+    const update = (action: () => void) => new Promise<void>((resolve, reject) => {
+        if (rejectUpdate) {
+            reject(new Error("app-history: concurrent navigation not supported"));
+            return;
+        }
+
+        rejectUpdate = () => {
+            try {
+                reject();
+            } finally {
+                rejectUpdate = null;
+            }
+        };
+
+        const unlisten = source.listen(location => {
+            let willRedirect = false;
+
+            if (!suppressor.isActive && isWrappedLocation(location)) {
+                const meta = location.state.meta;
+                willRedirect = meta.cut === "here";
+            }
+
+            if (!willRedirect) {
+                try {
+                    unlisten();
+                    resolve();
+                } finally {
+                    rejectUpdate = null;
+                }
+            }
+        });
+
+        action();
+    });
+
+    const getTrackedUserConfirmation: UserConfirmation = (message, callback) => {
+        const trackingCallback = (result: boolean) => {
+            try {
+                callback(result);
+            } finally {
+                if (!result) {
+                    onBlocked();
+                }
+            }
+        };
+
+        if (getUserConfirmation) {
+            getUserConfirmation(message, trackingCallback);
+        } else if (sourceType === "browser") {
+            trackingCallback(window.confirm(message));
+        } else {
+            callback(true);
+        }
+    };
+
+    const source = sourceType === "memory" ?
+        createMemoryHistory({ getUserConfirmation: getTrackedUserConfirmation }) :
+        createBrowserHistory({ getUserConfirmation: getTrackedUserConfirmation });
+
     const suppressor = new Suppressor();
     const notifier = new Notifier(source, suppressor);
-    const blocker = new Blocker(source, suppressor);
+    const blocker = new Blocker(source, suppressor, onBlocked);
 
-    const internalFindLast = (
+    const internalFindLast = async (
         match?: string | RegExp | PathPredicate | Partial<ILocation>,
-    ): IInternalFindLastResult => {
+    ): Promise<IInternalFindLastResult> => {
         const result: IInternalFindLastResult = {
             delta: 0,
             resume: null,
@@ -94,7 +164,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             const togo = cache.length + 1;
             result.delta += cache.length;
             result.undo += togo;
-            source.go(-togo);
+            await go(-togo);
         }
 
         result.delta = NaN;
@@ -110,7 +180,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         const meta = exposedLocation.state.meta;
 
         if (meta.cut === "here") {
-            source.goForward();
+            await update(() => source.goForward());
             exposedLocation = source.location;
             isAfterDirtyCut = true;
         } else {
@@ -121,7 +191,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         exposedLocation = unwrapLocation(exposedLocation);
     } else {
         try {
-            source.replace(wrapLocation(exposedLocation));
+            await update(() => source.replace(wrapLocation(exposedLocation)));
         } catch (ignored) { /* don't choke on init */ }
     }
 
@@ -136,141 +206,131 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             let meta = location.state.meta;
 
             if (meta.cut === "here") {
-                const resume = suppressor.suppress();
-
-                try {
+                suppress(async () => {
                     if ((exposedDepth > meta.depth) || (exposedDepth === meta.depth && isAfterDirtyCut)) {
-                        source.goBack();
+                        await source.goBack();
                     } else {
-                        source.goForward();
+                        await source.goForward();
                     }
-                } finally {
-                    resume();
-                }
 
-                meta = initialMetaState();
+                    meta = initialMetaState();
 
-                if (isWrappedLocation(location = source.location)) {
-                    meta = location.state.meta;
-                }
+                    if (isWrappedLocation(location = source.location)) {
+                        meta = location.state.meta;
+                    }
+
+                    exposedDepth = meta.depth;
+                    isAfterDirtyCut = meta.cut === "before";
+                    exposedLocation = unwrapLocation(location);
+                });
+            } else {
+                exposedDepth = meta.depth;
+                isAfterDirtyCut = meta.cut === "before";
+                exposedLocation = unwrapLocation(location);
             }
-
-            exposedDepth = meta.depth;
-            isAfterDirtyCut = meta.cut === "before";
         } else {
             exposedDepth = 0;
             isAfterDirtyCut = false;
+            exposedLocation = unwrapLocation(location);
         }
-
-        exposedLocation = unwrapLocation(location);
     });
 
     const canMakeCleanCut = () => {
         let ok = false;
 
         if (isWrappedLocation(source.location)) {
-            const { depth, cut } = source.location.state.meta;
-            ok = depth > 0 || cut === "before";
+            const meta = source.location.state.meta;
+            ok = meta.depth > 0 || meta.cut === "before";
         }
 
         return ok;
     };
 
-    const makeCleanCut = () => {
-        const curr = source.location;
-        source.goBack();
-        source.push(curr);
+    const makeCleanCut = async () => {
+        const curr = {
+            ...source.location,
+            key: undefined,
+        };
+        await goBack();
+        await update(() => source.push(curr));
     };
 
     const createDirtyCut = (
         curr: ILocation<IWrappedState>,
-        cut: "before" | "here",
+        how: "before" | "here",
     ): ILocation<IWrappedState> => ({
         ...curr,
+        key: undefined,
         state: {
             ...curr.state,
             meta: {
                 ...curr.state.meta,
-                cut,
+                cut: how,
             },
         },
     });
 
-    const makeDirtyCut = () => {
+    const makeDirtyCut = async () => {
         const curr = isWrappedLocation(source.location) ? source.location : wrapLocation(source.location);
         const next = createDirtyCut(curr, "before");
         const prev = createDirtyCut(curr, "here");
-        source.replace(prev);
-        source.push(next);
+        await update(() => source.replace(prev));
+        await update(() => source.push(next));
         isAfterDirtyCut = true;
     };
 
-    const push = (
-        pathOrDescriptor: string | Partial<ILocation>,
-        state?: any,
-    ): IAppHistory => {
-        if (typeof pathOrDescriptor === "string") {
-            source.push(pathOrDescriptor, nextState(source, PUSH, state, cacheLimit));
+    const cut = () => suppress(async () => {
+        if (canMakeCleanCut()) {
+            await makeCleanCut();
         } else {
-            source.push(nextLocation(source, PUSH, pathOrDescriptor, cacheLimit));
+            await makeDirtyCut();
+        }
+    });
+
+    const block = (prompt?: boolean | string | BlockPrompt) => blocker.block(prompt);
+
+    const createHref = (location: Partial<ILocation>) => source.createHref(location);
+
+    const distanceToHome = () => isWrappedLocation(source.location) ? -source.location.state.meta.depth : 0;
+
+    const findLast = async (match: string | RegExp | PathPredicate): Promise<number> => {
+        const result = await internalFindLast(match);
+
+        if (result.undo !== 0) {
+            await go(result.undo);
+            result.delta -= result.undo;
         }
 
-        return history;
+        if (result.resume) {
+            result.resume();
+        }
+
+        return result.delta;
     };
 
-    const replace = (
-        pathOrDescriptor: string | Partial<ILocation>,
-        state?: any,
-    ): IAppHistory => {
-        if (typeof pathOrDescriptor === "string") {
-            source.replace(pathOrDescriptor, nextState(source, REPLACE, state, cacheLimit));
-        } else {
-            source.replace(nextLocation(source, REPLACE, pathOrDescriptor, cacheLimit));
-        }
+    const go = (delta: number) => update(() => source.go(delta));
 
-        return history;
-    };
-
-    function suppress(): UnregisterCallback;
-    function suppress(action: WithSuppressionAction): IAppHistory;
-    function suppress(action?: WithSuppressionAction): UnregisterCallback | IAppHistory {
-        if (typeof action === "undefined") {
-            return suppressor.suppress();
-        } else {
-            const resume = suppressor.suppress();
-            try {
-                action(history);
-            } finally {
-                resume();
-            }
-            return history;
-        }
-    }
-
-    const distanceToHome = () =>
-        isWrappedLocation(source.location) ? -source.location.state.meta.depth : 0;
-
-    function goBack(to?: RegExp | PathPredicate): boolean;
-    function goBack(to: string, state?: any): IAppHistory;
-    function goBack(to?: Partial<ILocation>): IAppHistory;
-    function goBack(
+    async function goBack(to?: RegExp | PathPredicate): Promise<boolean>;
+    async function goBack(to: string, state?: any): Promise<boolean>;
+    async function goBack(to?: Partial<ILocation>): Promise<boolean>;
+    async function goBack(
         to?: string | Partial<ILocation> | RegExp | PathPredicate,
         state?: any,
-    ): IAppHistory | boolean {
+    ): Promise<boolean> {
         const conditional = to instanceof RegExp || typeof to === "function";
 
         if (typeof to === "object" && !(to instanceof RegExp)) {
             state = to.state;
         }
 
-        const found = internalFindLast(to);
+        const found = await internalFindLast(to);
         let willReplace = typeof state !== "undefined";
         let forcePath: string | null = null;
 
         if (isNaN(found.delta)) {
             if (conditional) {
                 if (found.undo) {
-                    source.go(found.undo);
+                    await go(found.undo);
                 }
 
                 if (found.resume) {
@@ -291,137 +351,135 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
             found.resume = suppressor.suppress();
         }
 
-        source.go(found.delta);
+        await go(found.delta);
 
         if (willReplace) {
             found.resume!();
 
             if (typeof forcePath === "string") {
-                source.replace(forcePath, state);
+                await replace(forcePath, state);
             } else {
-                source.replace({
+                await replace({
                     ...source.location,
                     state,
                 });
             }
         }
 
-        return conditional ? true : history;
+        return true;
     }
 
-    const history: IAppHistory = {
-        get cacheLimit(): number {
-            return cacheLimit;
-        },
+    const goForward = () => update(() => source.goForward());
 
-        get depth(): number {
-            return exposedDepth;
-        },
+    const goHome = async (
+        to?: string | Partial<ILocation>,
+        state?: any,
+    ) => {
+        const delta = distanceToHome();
 
-        get isSuppressed(): boolean {
-            return suppressor.isActive;
-        },
-
-        get length(): number {
-            return source.length;
-        },
-
-        get action(): NavigationAction {
-            return exposedAction;
-        },
-
-        get location(): ILocation {
-            return exposedLocation;
-        },
-
-        cut(): IAppHistory {
-            const resume = suppressor.suppress();
+        if (delta !== 0) {
+            let resume: UnregisterCallback | null = null;
 
             try {
-                if (canMakeCleanCut()) {
-                    makeCleanCut();
-                } else {
-                    makeDirtyCut();
+                if (typeof to !== "undefined") {
+                    resume = suppressor.suppress();
                 }
+
+                await go(delta);
             } finally {
-                resume();
+                if (resume) {
+                    resume();
+                }
             }
+        }
 
-            return history;
-        },
+        if (typeof to !== "undefined") {
+            await replace(to, state);
+        }
+    };
 
-        block(prompt?: boolean | string | BlockPrompt): UnregisterCallback {
-            return blocker.block(prompt);
-        },
+    const listen = (listener: NavigationListener) => notifier.listen(listener);
 
-        createHref(location: Partial<ILocation>): string {
-            return source.createHref(location);
-        },
+    const push = (
+        pathOrDescriptor: string | Partial<ILocation>,
+        state?: any,
+    ) => update(() => {
+        if (typeof pathOrDescriptor === "string") {
+            source.push(pathOrDescriptor, nextState(source, PUSH, state, cacheLimit));
+        } else {
+            source.push(nextLocation(source, PUSH, pathOrDescriptor, cacheLimit));
+        }
+    });
 
-        findLast(match: string | RegExp | PathPredicate): number {
-            const result = internalFindLast(match);
+    const replace = (
+        pathOrDescriptor: string | Partial<ILocation>,
+        state?: any,
+    ) => update(() => {
+        if (typeof pathOrDescriptor === "string") {
+            source.replace(pathOrDescriptor, nextState(source, REPLACE, state, cacheLimit));
+        } else {
+            source.replace(nextLocation(source, REPLACE, pathOrDescriptor, cacheLimit));
+        }
+    });
 
-            if (result.undo !== 0) {
-                source.go(result.undo);
-                result.delta -= result.undo;
-            }
-
-            if (result.resume) {
-                result.resume();
-            }
-
-            return result.delta;
-        },
-
-        go(delta: number): IAppHistory {
-            source.go(delta);
-            return history;
-        },
-
-        goBack,
-
-        goForward(): IAppHistory {
-            source.goForward();
-            return history;
-        },
-
-        goHome(
-            to?: string | Partial<ILocation>,
-            state?: any,
-        ): IAppHistory {
-            const delta = distanceToHome();
-
-            if (delta !== 0) {
-                let resume: UnregisterCallback | null = null;
-
+    function suppress(): UnregisterCallback;
+    function suppress(action: WithSuppressionAction): Promise<void>;
+    function suppress(action?: WithSuppressionAction): UnregisterCallback | Promise<void> {
+        if (typeof action === "undefined") {
+            return suppressor.suppress();
+        } else {
+            const resume = suppressor.suppress();
+            let promise: Promise<void> | null = null;
+            return new Promise<void>((resolve, reject) => {
                 try {
-                    if (typeof to !== "undefined") {
-                        resume = suppressor.suppress();
+                    const result = action(history);
+                    if (result instanceof Promise) {
+                        promise = result;
                     }
-
-                    source.go(delta);
                 } finally {
-                    if (resume) {
+                    if (promise === null) {
                         resume();
                     }
                 }
-            }
 
-            if (typeof to !== "undefined") {
-                replace(to, state);
-            }
+                if (promise === null) {
+                    resolve();
+                } else {
+                    promise.then(
+                        () => {
+                            resume();
+                            resolve();
+                        },
+                        () => {
+                            resume();
+                            reject();
+                        },
+                    );
+                }
+            });
+        }
+    }
 
-            return history;
-        },
+    const history: IAppHistory = {
+        get cacheLimit() { return cacheLimit; },
+        get depth(): number { return exposedDepth; },
+        get isSuppressed(): boolean { return suppressor.isActive; },
+        get length(): number { return source.length; },
+        get action(): NavigationAction { return exposedAction; },
+        get location(): ILocation { return exposedLocation; },
+        get source(): IHistory { return source; },
 
-        listen(listener: NavigationListener): UnregisterCallback {
-            return notifier.listen(listener);
-        },
-
+        block,
+        createHref,
+        cut,
+        findLast,
+        go,
+        goBack,
+        goForward,
+        goHome,
+        listen,
         push,
-
         replace,
-
         suppress,
     };
 
