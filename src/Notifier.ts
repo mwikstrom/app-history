@@ -17,7 +17,7 @@ export class Notifier {
         this.onSourceLocationChanged = this.onSourceLocationChanged.bind(this);
     }
 
-    public listen(listener: NavigationListener) {
+    public listen = (listener: NavigationListener) => {
         let isActive = true;
 
         this.listeners.push(listener);

@@ -12,6 +12,8 @@ export interface IAppHistory extends IHistory {
 
     cut(): Promise<void>;
 
+    dispose(): void;
+
     findLast(match: string | RegExp | PathPredicate): Promise<number>;
 
     go(delta: number): Promise<void>;
@@ -24,6 +26,8 @@ export interface IAppHistory extends IHistory {
     goHome(to: string, state?: any): Promise<void>;
     goHome(to?: Partial<ILocation>): Promise<void>;
 
+    init(): Promise<void>;
+
     push(path: string, state?: any): Promise<void>;
     push(location: Partial<ILocation>): Promise<void>;
 
@@ -31,5 +35,5 @@ export interface IAppHistory extends IHistory {
     replace(location: Partial<ILocation>): Promise<void>;
 
     suppress(): UnregisterCallback;
-    suppress(action: WithSuppressionAction): Promise<void>;
+    suppressWhile(action: WithSuppressionAction): Promise<void>;
 }

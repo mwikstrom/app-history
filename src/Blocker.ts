@@ -10,7 +10,7 @@ import { Suppressor } from "./Suppressor";
 export class Blocker {
     constructor(private source: IHistory, private suppressor: Suppressor, private onBlocked: () => void) { }
 
-    public block(prompt: boolean | string | BlockPrompt = false) {
+    public block = (prompt: boolean | string | BlockPrompt = false) => {
         const wrapper = ((location: ILocation, action: NavigationAction) => {
             let result;
 

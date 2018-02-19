@@ -1,22 +1,28 @@
 import { createMemoryHistory, MemoryHistory } from "history";
 
-import { POP, PUSH, REPLACE } from "./api";
+import { IAppHistoryOptions, POP, PUSH, REPLACE } from "./api";
 import { createAppHistory } from "./createAppHistory";
+
+const createAndInitAppHistory = async (options?: IAppHistoryOptions) => {
+    const history = createAppHistory(options);
+    await history.init();
+    return history;
+};
 
 describe("createAppHistory", async () => {
     it("can be invoked without arguments", async () => {
-        const history = await createAppHistory();
+        const history = await createAndInitAppHistory();
         expect(history.cacheLimit).toBe(20);
     });
 
     it("can be invoked with cache limit", async () => {
-        const history = await createAppHistory({ cacheLimit: 123 });
+        const history = await createAndInitAppHistory({ cacheLimit: 123 });
         expect(history.cacheLimit).toBe(123);
     });
 
     describe("returns a history extension object that", async () => {
         it("keeps track of app history depth", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             expect(history.depth).toBe(0);
             await history.push("foo");
             expect(history.depth).toBe(1);
@@ -27,7 +33,7 @@ describe("createAppHistory", async () => {
         });
 
         it("keeps track of history length", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             expect(history.length).toBe(1);
             await history.push("foo");
             expect(history.length).toBe(2);
@@ -38,7 +44,7 @@ describe("createAppHistory", async () => {
         });
 
         it("exposes navigation action", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             expect(history.action).toBe(POP);
             await history.push("foo");
             expect(history.action).toBe(PUSH);
@@ -49,19 +55,19 @@ describe("createAppHistory", async () => {
         });
 
         it("can push using location descriptor", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             await history.push({ hash: "#foo" });
             expect(history.location.hash).toBe("#foo");
         });
 
         it("can replace using location descriptor", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             await history.replace({ hash: "#foo" });
             expect(history.location.hash).toBe("#foo");
         });
 
         it("can go back and forward", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             await history.push("foo");
             expect(history.location.pathname).toBe("/foo");
             await history.push("bar");
@@ -73,7 +79,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back and forward using delta", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             await history.push("foo");
             expect(history.location.pathname).toBe("/foo");
             await history.push("bar");
@@ -87,7 +93,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can block and unblock navigation", async () => {
-            const history = await createAppHistory({
+            const history = await createAndInitAppHistory({
                 sourceType: "memory",
                 getUserConfirmation(message, callback) {
                     callback(false);
@@ -107,7 +113,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can listen to location changes", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             let count = 0;
             const stop = history.listen(() => ++count);
             await history.push("foo");
@@ -120,7 +126,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can create href from descriptor", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const href = history.createHref({
                 hash: "baz",
                 pathname: "foo",
@@ -130,7 +136,7 @@ describe("createAppHistory", async () => {
         });
 
         it("cannot go home after tamper", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source;
             await history.push("a");
             await history.push("b");
@@ -140,7 +146,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go home without pushing", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             expect(history.location.pathname).toBe("/");
             expect(history.depth).toBe(0);
             await history.goHome();
@@ -149,7 +155,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go home after pushing", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             expect(history.location.pathname).toBe("/");
             await history.push("foo");
             await history.push("bar");
@@ -160,7 +166,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go home after replacing", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             expect(history.location.pathname).toBe("/");
             await history.replace("foo");
             expect(history.depth).toBe(0);
@@ -170,7 +176,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go home to path", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source;
             expect(history.location.pathname).toBe("/");
             await history.push("foo");
@@ -188,7 +194,7 @@ describe("createAppHistory", async () => {
         });
 
         it("block prompt is only invoked once when going home to path", async () => {
-            const history = await createAppHistory({
+            const history = await createAndInitAppHistory({
                 sourceType: "memory",
                 getUserConfirmation(message, callback) {
                     callback(true);
@@ -208,7 +214,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can be suppressed and resumed", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             let count = 0;
             history.listen(() => ++count);
             expect(count).toBe(0);
@@ -223,7 +229,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can find delta positions in back stack", async () => {
-            const history = await createAppHistory({sourceType: "memory", cacheLimit: 3});
+            const history = await createAndInitAppHistory({sourceType: "memory", cacheLimit: 3});
 
             expect(history.location.pathname).toBe("/");
             expect(await history.findLast("/x")).toBe(NaN);
@@ -264,7 +270,7 @@ describe("createAppHistory", async () => {
         });
 
         it("cannot find delta when state was tampered", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source;
             await history.push("a");
             await history.push("b");
@@ -273,7 +279,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can find delta positions in back stack without any cache", async () => {
-            const history = await createAppHistory({sourceType: "memory", cacheLimit: 0});
+            const history = await createAndInitAppHistory({sourceType: "memory", cacheLimit: 0});
 
             expect(history.location.pathname).toBe("/");
             expect(await history.findLast("/x")).toBe(NaN);
@@ -314,16 +320,16 @@ describe("createAppHistory", async () => {
         });
 
         it("can invoke with suppression", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             expect(history.isSuppressed).toBe(false);
-            history.suppress(() => {
+            history.suppressWhile(() => {
                 expect(history.isSuppressed).toBe(true);
             });
             expect(history.isSuppressed).toBe(false);
         });
 
         it("is reset to zero depth when state is tampered", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source;
             await history.push("foo");
             await history.push("bar");
@@ -333,7 +339,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can be fooled by fake meta state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source;
             source.push("fooled", {
                 data: "fake",
@@ -344,7 +350,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can cut history (clean)", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
 
             await history.push("a");
             await history.push("b");
@@ -374,7 +380,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can cut history (dirty)", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
             source.push("a");
 
@@ -407,7 +413,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back through (and skip over) dirty cut point", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
             source.push("a");
 
@@ -428,7 +434,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go forward through (and skip over) dirty cut point", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
             source.push("a");
 
@@ -452,7 +458,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can be initialized on dirty cut point", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
             source.push("a");
 
@@ -478,7 +484,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can make dirty cut on tampered state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
             source.push("a");
 
@@ -505,7 +511,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to matched pattern", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -525,7 +531,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to matched pattern (no cache)", async () => {
-            const history = await createAppHistory({sourceType: "memory", cacheLimit: 0});
+            const history = await createAndInitAppHistory({sourceType: "memory", cacheLimit: 0});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -545,7 +551,7 @@ describe("createAppHistory", async () => {
         });
 
         it("cannot go back to unmatched pattern", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -564,7 +570,7 @@ describe("createAppHistory", async () => {
         });
 
         it("cannot go back to unmatched pattern (nocache)", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -583,7 +589,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to specific path", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -603,7 +609,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to specific path and state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -623,7 +629,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to specific location without state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -643,7 +649,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to specific location with state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -663,7 +669,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to unmatched path", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -683,7 +689,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to unmatched path and state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -703,7 +709,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to unmatched location without state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
@@ -723,7 +729,7 @@ describe("createAppHistory", async () => {
         });
 
         it("can go back to unmatched location with state", async () => {
-            const history = await createAppHistory({sourceType: "memory"});
+            const history = await createAndInitAppHistory({sourceType: "memory"});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
