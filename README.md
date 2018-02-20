@@ -95,6 +95,10 @@ history.init().then(function () {
 
 **TODO**
 
+### A note on initialization
+
+**Blah blah. Why it's needed and Implicit if you wish**
+
 ### In-app navigation depth
 
 The `depth` property of an `app-history` object lets you know how deep into the app you've gone, and thereby how far back you can go and still remain inside the current app session:
