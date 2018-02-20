@@ -46,17 +46,25 @@ export class Goer {
             forcePath = typeof to === "string" ? to : this.source.createHref(to as Partial<ILocation>);
         }
 
-        if (found.resume && !willReplace) {
-            found.resume();
-        } else if (!found.resume && willReplace) {
-            found.resume = this.suppressor.suppress();
+        if (found.delta !== 0) {
+            if (!found.resume && willReplace) {
+                found.resume = this.suppressor.suppress();
+            }
+
+            await this.go(found.delta);
+        } else if (found.resume && !forcePath && !willReplace) {
+            willReplace = true;
+
+            if (isWrappedLocation(this.source.location)) {
+                state = this.source.location.state.data;
+            }
         }
 
-        await this.go(found.delta);
+        if (found.resume) {
+            found.resume();
+        }
 
         if (willReplace) {
-            found.resume!();
-
             if (typeof forcePath === "string") {
                 await this.mutator.replace(forcePath, state);
             } else {
