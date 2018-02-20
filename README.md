@@ -5,7 +5,15 @@
 
 ## Objective
 
-**TODO**
+The primary objective for `app-history` is to help developers implement back/home-buttons in progressive web apps. 
+
+When building a progressive web app you probably want to include a back-button in the user interface to support navigation in standalone mode (without browser chrome).
+
+*blah blah blah back button options*
+
+Another useful feature provided by `app-history` is the ability to clear the history forward stack.
+
+*blah blah blah wizard/stepper options*
 
 ## Installation
 
