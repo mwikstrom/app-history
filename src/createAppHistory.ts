@@ -1,4 +1,5 @@
 import {
+    AppHistoryStatus,
     IAppHistory,
     IAppHistoryOptions,
     IHistory,
@@ -51,18 +52,19 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const cut = protector.async(cutter.cut);
     const block = blocker.block;
     const createHref = source.createHref.bind(source);
-    const dispose = protector.sync(tracker.stop);
+    const dispose = protector.sync(tracker.stop, "disposed");
     const findLast = protector.async(scanner.findLast);
     const go = protector.async(goer.go);
     const goBack = protector.async(goer.goBack);
     const goForward = protector.async(goer.goForward);
     const goHome = protector.async(goer.goHome);
-    const init = protector.async(tracker.start, "idle");
+    const init = protector.async(tracker.start, "idle", "ready");
     const listen = notifier.listen;
     const push = protector.async(mutator.push);
     const replace = protector.async(mutator.replace);
     const suppress = protector.sync(suppressor.suppress);
     const suppressWhile = protector.async(suppressor.suppressWhile, "idle");
+    const whenIdle = protector.whenIdle;
 
     // Make the App History object
     const history: IAppHistory = {
@@ -73,6 +75,8 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         get action(): NavigationAction { return tracker.action; },
         get location(): ILocation { return tracker.location; },
         get source(): IHistory { return source; },
+        get status(): AppHistoryStatus { return protector.status; },
+        get isBusy(): boolean { return protector.status === "busy"; },
 
         block,
         createHref,
@@ -89,6 +93,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
         replace,
         suppress,
         suppressWhile,
+        whenIdle,
     };
 
     Object.freeze(history);

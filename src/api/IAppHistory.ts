@@ -4,11 +4,15 @@ import { IHistory } from "./IHistory";
 import { ILocation } from "./ILocation";
 import { WithSuppressionAction } from "./WithSuppressionAction";
 
+export type AppHistoryStatus = "created" | "ready" | "busy" | "disposed";
+
 export interface IAppHistory extends IHistory {
     readonly cacheLimit: number;
     readonly depth: number;
     readonly isSuppressed: boolean;
+    readonly isBusy: boolean;
     readonly source: IHistory;
+    readonly status: AppHistoryStatus;
 
     cut(): Promise<void>;
 
@@ -36,4 +40,6 @@ export interface IAppHistory extends IHistory {
 
     suppress(): UnregisterCallback;
     suppressWhile(action: WithSuppressionAction): Promise<void>;
+
+    whenIdle(): Promise<void>;
 }
