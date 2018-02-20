@@ -12,6 +12,7 @@ import { Cutter } from "./Cutter";
 import { Goer } from "./Goer";
 import { Mutator } from "./Mutator";
 import { Notifier } from "./Notifier";
+import { Protector } from "./Protector";
 import { Scanner } from "./Scanner";
 import { Suppressor } from "./Suppressor";
 import { Tracker } from "./Tracker";
@@ -38,23 +39,24 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
     const tracker = new Tracker(source, suppressor, mutator);
     const cutter = new Cutter(source, suppressor, mutator);
     const goer = new Goer(source, suppressor, mutator, scanner);
+    const protector = new Protector(tracker);
 
     // Public methods
-    const cut = cutter.cut;
+    const cut = protector.async(cutter.cut);
     const block = blocker.block;
     const createHref = source.createHref.bind(source);
-    const dispose = tracker.stop;
-    const findLast = scanner.findLast;
-    const go = goer.go;
-    const goBack = goer.goBack;
-    const goForward = goer.goForward;
-    const goHome = goer.goHome;
-    const init = tracker.start;
+    const dispose = protector.sync(tracker.stop);
+    const findLast = protector.async(scanner.findLast);
+    const go = protector.async(goer.go);
+    const goBack = protector.async(goer.goBack);
+    const goForward = protector.async(goer.goForward);
+    const goHome = protector.async(goer.goHome);
+    const init = protector.async(tracker.start, "idle");
     const listen = notifier.listen;
-    const push = mutator.push;
-    const replace = mutator.replace;
-    const suppress = suppressor.suppress;
-    const suppressWhile = suppressor.suppressWhile;
+    const push = protector.async(mutator.push);
+    const replace = protector.async(mutator.replace);
+    const suppress = protector.sync(suppressor.suppress);
+    const suppressWhile = protector.async(suppressor.suppressWhile, "idle");
 
     // Make the App History object
     const history: IAppHistory = {

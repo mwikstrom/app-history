@@ -26,6 +26,7 @@ export class Tracker {
     public get location() { return this.trackedLocation; }
     public get action() { return this.trackedAction; }
     public get depth() { return this.trackedDepth; }
+    public get ready() { return !!this.unlisten; }
 
     public start = async () => {
         await this.setupLocation();
