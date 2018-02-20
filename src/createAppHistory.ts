@@ -39,7 +39,7 @@ export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory 
 
     // Helpers
     const suppressor = new Suppressor();
-    const mutator = new Mutator(source, suppressor, cacheLimit);
+    const mutator = new Mutator(source, cacheLimit);
     const blocker = new Blocker(source, suppressor, onChangeWasBlocked);
     const scanner = new Scanner(source, suppressor, mutator);
     const notifier = new Notifier(source, suppressor);

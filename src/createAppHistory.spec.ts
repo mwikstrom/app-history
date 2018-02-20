@@ -433,30 +433,6 @@ describe("createAppHistory", async () => {
             expect(source.index).toBe(0);
         });
 
-        it("can go forward through (and skip over) dirty cut point", async () => {
-            const history = await createAndInitAppHistory({mode: "memory"});
-            const source = history.source as MemoryHistory;
-            source.push("a");
-
-            await history.push("b");
-            expect(source.index).toBe(2);
-
-            await history.goBack();
-            expect(source.index).toBe(1);
-
-            await history.cut();
-            expect(source.index).toBe(2);
-
-            await history.go(-2);
-            expect(source.index).toBe(0);
-
-            expect(source.entries[1].state.meta.cut).toBe("here");
-            expect(source.entries[2].state.meta.cut).toBe("before");
-
-            await history.goForward();
-            expect(source.index).toBe(2);
-        });
-
         it("can be initialized on dirty cut point", async () => {
             const history = await createAndInitAppHistory({mode: "memory"});
             const source = history.source as MemoryHistory;

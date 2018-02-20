@@ -26,7 +26,12 @@ export class Scanner {
         };
 
         if (typeof match === "undefined") {
-            result.delta = -1;
+            if (isWrappedLocation(this.source.location) && this.source.location.state.meta.cut === "before") {
+                result.delta = -2;
+            } else {
+                result.delta = -1;
+            }
+
             return result;
         }
 

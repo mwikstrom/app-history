@@ -1,6 +1,5 @@
 import { IHistory, ILocation, NavigationAction, UnregisterCallback } from "./api";
 
-import { initialMetaState } from "./initialMetaState";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { Mutator } from "./Mutator";
 import { Suppressor } from "./Suppressor";
@@ -11,7 +10,6 @@ export class Tracker {
     private trackedLocation: ILocation;
     private trackedAction: NavigationAction;
     private trackedDepth = 0;
-    private isAfterDirtyCut = false;
     private unlisten: UnregisterCallback | null = null;
 
     constructor(
@@ -46,16 +44,7 @@ export class Tracker {
     private async setupLocation() {
         if (isWrappedLocation(this.trackedLocation)) {
             const meta = this.trackedLocation.state.meta;
-
-            if (meta.cut === "here") {
-                await this.mutator.update(() => this.source.goForward());
-                this.trackedLocation = this.source.location;
-                this.isAfterDirtyCut = true;
-            } else {
-                this.trackedDepth = meta.depth;
-                this.isAfterDirtyCut = meta.cut === "before";
-            }
-
+            this.trackedDepth = meta.depth;
             this.trackedLocation = unwrapLocation(this.trackedLocation);
         } else {
             try {
@@ -68,39 +57,19 @@ export class Tracker {
         location: ILocation,
         action: NavigationAction,
     ) => {
+        if (this.suppressor.isActive) {
+            return;
+        }
+
         this.trackedAction = action;
 
         if (isWrappedLocation(location)) {
-            let meta = location.state.meta;
-
-            if (meta.cut === "here" && !this.suppressor.isActive) {
-                this.suppressor.suppressWhile(async () => {
-                    if ((this.trackedDepth > meta.depth) ||
-                        (this.trackedDepth === meta.depth && this.isAfterDirtyCut)) {
-                        await this.source.goBack();
-                    } else {
-                        await this.source.goForward();
-                    }
-
-                    meta = initialMetaState();
-
-                    if (isWrappedLocation(location = this.source.location)) {
-                        meta = location.state.meta;
-                    }
-
-                    this.trackedDepth = meta.depth;
-                    this.isAfterDirtyCut = meta.cut === "before";
-                    this.trackedLocation = unwrapLocation(location);
-                });
-            } else {
-                this.trackedDepth = meta.depth;
-                this.isAfterDirtyCut = meta.cut === "before";
-                this.trackedLocation = unwrapLocation(location);
-            }
+            const meta = location.state.meta;
+            this.trackedDepth = meta.depth;
+            this.trackedLocation = unwrapLocation(location);
         } else {
             this.trackedDepth = 0;
-            this.isAfterDirtyCut = false;
-            this.trackedLocation = unwrapLocation(location);
+            this.trackedLocation = location;
         }
     }
 }

@@ -1,8 +1,6 @@
 import { IHistory, ILocation, PUSH, REPLACE } from "./api";
-import { isWrappedLocation } from "./isWrappedLocation";
 import { nextLocation } from "./nextLocation";
 import { nextState } from "./nextState";
-import { Suppressor } from "./Suppressor";
 
 type RejectFunc = (reason: Error) => void;
 
@@ -13,7 +11,6 @@ export class Mutator {
 
     constructor(
         private source: IHistory,
-        private suppressor: Suppressor,
         private cacheLimit: number,
     ) {}
 
@@ -32,21 +29,12 @@ export class Mutator {
                 }
             };
 
-            const unlisten = this.source.listen(location => {
-                let willRedirect = false;
-
-                if (!this.suppressor.isActive && isWrappedLocation(location)) {
-                    const meta = location.state.meta;
-                    willRedirect = meta.cut === "here";
-                }
-
-                if (!willRedirect) {
-                    try {
-                        unlisten();
-                        resolve();
-                    } finally {
-                        this.currentRejectFunc = null;
-                    }
+            const unlisten = this.source.listen(() => {
+                try {
+                    unlisten();
+                    resolve();
+                } finally {
+                    this.currentRejectFunc = null;
                 }
             });
 
