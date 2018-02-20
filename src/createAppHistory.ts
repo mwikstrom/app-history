@@ -19,16 +19,22 @@ import { Tracker } from "./Tracker";
 
 export function createAppHistory(options: IAppHistoryOptions = {}): IAppHistory {
     const {
-        sourceType = "browser",
+        mode = "browser",
         getUserConfirmation,
         cacheLimit = 20,
+        provider,
     } = options;
 
     // Navigation block trampoline
     const onChangeWasBlocked = () => mutator.changeWasBlocked();
 
     // Source history object
-    const source = createSource(onChangeWasBlocked, sourceType, getUserConfirmation);
+    const source = createSource(
+        onChangeWasBlocked,
+        mode,
+        getUserConfirmation,
+        provider,
+    );
 
     // Helpers
     const suppressor = new Suppressor();

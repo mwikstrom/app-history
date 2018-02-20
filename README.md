@@ -64,7 +64,7 @@ Alternatively, you can load it directly from the [UNPKG][unpkg] CDN using vanill
 Then create an App History object in your code like this:
 
 ```js
-const history = AppHistory.createAppHistory();
+const history = AppHistory.createAppHistory({ provider: History });
 ```
 
 ## Usage

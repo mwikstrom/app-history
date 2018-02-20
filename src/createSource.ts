@@ -1,11 +1,12 @@
 import { createBrowserHistory, createMemoryHistory } from "history";
 
-import { IHistory, SourceType, UserConfirmation } from "./api";
+import { IHistory, IHistoryProvider, SourceMode, UserConfirmation } from "./api";
 
 export function createSource(
     onChangeWasBlocked: () => void,
-    sourceType: SourceType,
+    mode: SourceMode,
     getUserConfirmation?: UserConfirmation,
+    provider?: IHistoryProvider,
 ): IHistory {
     const getTrackedUserConfirmation: UserConfirmation = (message, callback) => {
         const trackingCallback = (result: boolean) => {
@@ -20,16 +21,30 @@ export function createSource(
 
         if (getUserConfirmation) {
             getUserConfirmation(message, trackingCallback);
-        } else if (sourceType === "browser") {
+        } else if (mode === "browser") {
             trackingCallback(window.confirm(message));
         } else {
             callback(true);
         }
     };
 
-    if (sourceType === "memory") {
-        return createMemoryHistory({ getUserConfirmation: getTrackedUserConfirmation });
-    } else {
-        return createBrowserHistory({ getUserConfirmation: getTrackedUserConfirmation });
+    if (!provider) {
+        provider = {
+            createBrowserHistory,
+            createMemoryHistory,
+        };
     }
+
+    const factoryFunc = mode === "memory" ?
+        provider.createMemoryHistory : provider.createBrowserHistory;
+
+    if (!factoryFunc) {
+        throw new Error("app-history: Missing provider for " + mode + " history");
+    }
+
+    if (provider) {
+        factoryFunc.bind(provider);
+    }
+
+    return factoryFunc({ getUserConfirmation: getTrackedUserConfirmation });
 }
