@@ -108,10 +108,12 @@ resume();
 Or using a callback action:
 
 ```js
-history.suppress(() => {
+history.suppressWhile(() => {
     // code in this callback won't notify listeners or invoke block prompt
 });
 ```
+
+`suppressWhile` returns a `Promise` object and will await a `Promise` object returned by the callback function.  
 
 You can at any time determine whether notifications and prompts are being suppressed:
 
@@ -119,9 +121,9 @@ You can at any time determine whether notifications and prompts are being suppre
 console.log("Suppression is ", history.isSuppressed ? "active" : "inactive");
 ```
 
-### Invocation chaining
+### Async promises
 
-`app-history` lets you use invocation chaining on all methods that would otherwise return void. 
+`app-history` return promises from all methods that may trigger a location change. These promises are resolved when the new location has been applied, or rejected in case the change is blocked. 
 
 This includes the following methods from [`history`][history]:
 * `go`
@@ -132,8 +134,17 @@ This includes the following methods from [`history`][history]:
 
 And these extension methods:
 * `cut`
+* `findLast`
 * `goHome`
-* `suppress` (when using a callback function)
+* `init`
+* `suppressWhile`
+* `whenIdle`
+
+You can determine whether `app-history` is currently processing an async operation by reading the `isBusy` property:
+
+```js
+console.log("App history is ", history.isBusy ? "busy" : "idle");
+```
 
 ### Inspecting the in-app back stack
 
