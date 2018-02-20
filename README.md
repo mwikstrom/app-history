@@ -143,15 +143,41 @@ And these extension methods:
 
 `createAppHistory` will, by default, create a new browser history using `createBrowserHistory` from the [`history`][history] package.
 
+You can instruct `app-history` to use `createMemoryHistory` (also from the [`history`][history] package) instead, which is helpful when testing your code in a non-browser environment:
+
+```js
+const history = createAppHistory({
+    mode: "memory"
+});
+```
+
 If you want to provide another underlying history object you can do so (however, it is strongly recommended that you only access the underlying history object via the newly returned `app-history` extension to avoid confusion):
 
 ```js
 const history = createAppHistory({
-    source: myHistoryObject
+    provider: myHistoryObjectProvider
 });
 ```
 
+The supplied provider object must declare a function named `createBrowserHistory` when `mode` is omitted or set to `"browser"`, or a function named `createMemoryHistory` when `mode` is set to `"memory"`.
+
+`app-history` will invoke the provided function with a configuration object containing a `getUserConfirmation` function, no matter whether such a configuration function was passed to `createAppHistory` or not.
+
 `app-history` is based on HTML5 History API state objects. So make sure that the underlying history object has support for that.
+
+### Specifying a custom block prompt
+
+By default, `app-history` will (just like [`history`][history]) use `window.confirm` to display a prompt when navigation is blocked. You can provide a custom prompt to `createAppHistory`:
+
+```js
+const history = createAppHistory({
+    getUserConfirmation(message, callback) {
+        callback(window.confirm(message));
+    }
+});
+```
+
+Please refer to the [`history`][history] package for details.
 
 ### Configure the internal cache limit
 
