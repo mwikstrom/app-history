@@ -20,6 +20,7 @@ Then create an App History object in your code like this:
 ```js
 import { createAppHistory } from "app-history";
 const history = createAppHistory();
+await history.init();
 ```
 
 Use it with [`react-router`][react-router] something like this:
@@ -34,6 +35,7 @@ import { App } from "./App"; // Your app root component
 
 // Create App History object (extending Browser History)
 const history = createAppHistory();
+await history.init();
 
 // Create a <div> that will host the App component
 const root = document.createElement("div");
@@ -65,6 +67,9 @@ Then create an App History object in your code like this:
 
 ```js
 const history = AppHistory.createAppHistory({ provider: History });
+history.init().then(function () {
+    // do stuff
+});
 ```
 
 ## Usage
