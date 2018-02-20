@@ -12,6 +12,7 @@ module.exports = {
         library: LIBRARY_NAME,
         libraryTarget: "umd"
     },
+    devtool: "source-map",
     externals: [
         "history"
     ],
@@ -34,7 +35,8 @@ module.exports = {
         new CleanWebpackPlugin(["dist"]),
         new DtsBundlePlugin(),
         new webpack.optimize.UglifyJsPlugin({
-            minimize: true
+            minimize: true,
+            sourceMap: true
         })
     ]
 };
