@@ -51,7 +51,6 @@ render(
 );
 ```
 
-
 ----------
 
 Alternatively, you can load it directly from the [UNPKG][unpkg] CDN using vanilla HTML and JavaScript:
@@ -71,6 +70,8 @@ history.init().then(function () {
     // do stuff
 });
 ```
+
+(`app-history` is built for ES5 but require support for `Promise` objects. To ensure compatibility you may want to load a Promise polyfill too.)
 
 ## Usage
 
