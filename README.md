@@ -60,7 +60,7 @@ Alternatively, you can load it directly from the [UNPKG][unpkg] CDN using vanill
 <script src="https://unpkg.com/app-history/dist/app-history.js"></script>
 ```
 
-(Notice that you'll have to load the [`history`][history] UMD package too)
+*Notice that you'll have to load the [`history`][history] UMD package too*
 
 Then create an App History object in your code like this:
 
@@ -71,7 +71,7 @@ history.init().then(function () {
 });
 ```
 
-(`app-history` is built for ES5 but require support for `Promise` objects. To ensure compatibility you may want to load a Promise polyfill too.)
+*`app-history` is built for ES5 but require support for `Promise` objects. To ensure compatibility you may want to load a Promise polyfill too.*
 
 ## Usage
 
