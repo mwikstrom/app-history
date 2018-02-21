@@ -40,10 +40,6 @@ function afterPush(meta: IMetaState, path: string): IMetaState {
         depth: meta.depth + 1,
     };
 
-    if (meta.cut === "here") {
-        next.cut = "before";
-    }
-
     return next;
 }
 
@@ -57,7 +53,6 @@ function afterPop(meta: IMetaState): IMetaState {
 function afterReplace(meta: IMetaState): IMetaState {
     return {
         cache: meta.cache.slice(),
-        cut: meta.cut,
         depth: meta.depth,
     };
 }

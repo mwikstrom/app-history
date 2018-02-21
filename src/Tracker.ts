@@ -1,5 +1,6 @@
 import { IHistory, ILocation, NavigationAction, UnregisterCallback } from "./api";
 
+import { isBackOutLocation } from "./Cutter";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { Mutator } from "./Mutator";
 import { Suppressor } from "./Suppressor";
@@ -27,7 +28,7 @@ export class Tracker {
     public get ready() { return !!this.unlisten; }
 
     public start = async () => {
-        await this.setupLocation();
+        await this.setup();
 
         if (!this.unlisten) {
             this.unlisten = this.source.listen(this.onLocationChanged);
@@ -41,7 +42,14 @@ export class Tracker {
         }
     }
 
-    private async setupLocation() {
+    private async setup() {
+        this.trackedLocation = this.source.location;
+        this.trackedAction = this.source.action;
+
+        if (isBackOutLocation(this.trackedLocation)) {
+            await this.mutator.update(() => this.source.goBack());
+        }
+
         if (isWrappedLocation(this.trackedLocation)) {
             const meta = this.trackedLocation.state.meta;
             this.trackedDepth = meta.depth;
@@ -57,6 +65,11 @@ export class Tracker {
         location: ILocation,
         action: NavigationAction,
     ) => {
+        if (isBackOutLocation(location)) {
+            this.source.goBack();
+            return;
+        }
+
         if (this.suppressor.isActive) {
             return;
         }

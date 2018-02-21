@@ -2,6 +2,7 @@ import { createMemoryHistory, MemoryHistory } from "history";
 
 import { IAppHistoryOptions, POP, PUSH, REPLACE } from "./api";
 import { createAppHistory } from "./createAppHistory";
+import { isBackOutLocation } from "./Cutter";
 
 const createAndInitAppHistory = async (options?: IAppHistoryOptions) => {
     const history = createAppHistory(options);
@@ -401,89 +402,28 @@ describe("createAppHistory", async () => {
             await history.cut();
             expect(history.location.pathname).toBe("/a");
             expect(history.length).toBe(3);
-            expect(source.index).toBe(2);
+            expect(source.index).toBe(1);
 
-            await history.goForward();
+            await history.goForward(); // shall back out again
             expect(history.location.pathname).toBe("/a");
             expect(history.length).toBe(3);
-            expect(source.index).toBe(2);
+            expect(source.index).toBe(1);
 
-            expect(source.entries[1].state.meta.cut).toBe("here");
-            expect(source.entries[2].state.meta.cut).toBe("before");
+            expect(source.entries[2].state).toBe("__NOGO__");
         });
 
-        it("can go back through (and skip over) dirty cut point", async () => {
-            const history = await createAndInitAppHistory({mode: "memory"});
+        it("cannot be initialized on no-go location (will back out)", async () => {
+            const history = createAppHistory({mode: "memory"});
             const source = history.source as MemoryHistory;
-            source.push("a");
+            source.replace("/a");
+            source.push("/b", "__NOGO__");
 
-            await history.push("b");
-            expect(source.index).toBe(2);
-
-            await history.goBack();
             expect(source.index).toBe(1);
+            expect(isBackOutLocation(source.location)).toBe(true);
 
-            await history.cut();
-            expect(source.index).toBe(2);
+            await history.init();
 
-            expect(source.entries[1].state.meta.cut).toBe("here");
-            expect(source.entries[2].state.meta.cut).toBe("before");
-
-            await history.goBack();
             expect(source.index).toBe(0);
-        });
-
-        it("can be initialized on dirty cut point", async () => {
-            const history = await createAndInitAppHistory({mode: "memory"});
-            const source = history.source as MemoryHistory;
-            source.push("a");
-
-            await history.push("b");
-            expect(source.index).toBe(2);
-
-            await history.goBack();
-            expect(source.index).toBe(1);
-
-            await history.cut();
-            expect(source.index).toBe(2);
-
-            await history.go(-2);
-            expect(source.index).toBe(0);
-
-            expect(source.entries[1].state.meta.cut).toBe("here");
-            expect(source.entries[2].state.meta.cut).toBe("before");
-
-            history.suppress();
-
-            source.goForward();
-            expect(source.index).toBe(1);
-        });
-
-        it("can make dirty cut on tampered state", async () => {
-            const history = await createAndInitAppHistory({mode: "memory"});
-            const source = history.source as MemoryHistory;
-            source.push("a");
-
-            await history.push("b");
-            expect(source.index).toBe(2);
-
-            await history.goBack();
-            expect(source.index).toBe(1);
-
-            source.replace("a", "tampered");
-            await history.cut();
-            expect(source.index).toBe(2);
-
-            await history.go(-2);
-            expect(source.index).toBe(0);
-
-            expect(source.entries[1].state.meta.cut).toBe("here");
-            expect(source.entries[2].state.meta.cut).toBe("before");
-
-            history.suppress();
-
-            source.goForward();
-            expect(source.index).toBe(1);
         });
 
         it("can go back to matched pattern", async () => {

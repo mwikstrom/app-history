@@ -1,25 +1,18 @@
-import { IHistory, ILocation, IWrappedState } from "./api";
+import { IHistory, ILocation } from "./api";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { Mutator } from "./Mutator";
 import { Suppressor } from "./Suppressor";
-import { wrapLocation } from "./wrapLocation";
+
+const NOGO_STATE_VALUE = "__NOGO__";
+
+export const isBackOutLocation = (location: ILocation) => location.state === NOGO_STATE_VALUE;
+
+export const makeBackOutLocation = (input: ILocation) => ({
+    ...input,
+    state: NOGO_STATE_VALUE,
+});
 
 export class Cutter {
-    private static createDirtyCut = (
-        curr: ILocation<IWrappedState>,
-        how: "before" | "here",
-    ): ILocation<IWrappedState> => ({
-        ...curr,
-        key: undefined,
-        state: {
-            ...curr.state,
-            meta: {
-                ...curr.state.meta,
-                cut: how,
-            },
-        },
-    })
-
     constructor(
         private source: IHistory,
         private suppressor: Suppressor,
@@ -39,7 +32,7 @@ export class Cutter {
 
         if (isWrappedLocation(this.source.location)) {
             const meta = this.source.location.state.meta;
-            ok = meta.depth > 0 || meta.cut === "before";
+            ok = meta.depth > 0;
         }
 
         return ok;
@@ -55,11 +48,7 @@ export class Cutter {
     }
 
     private async makeDirtyCut() {
-        const curr = isWrappedLocation(this.source.location) ?
-            this.source.location : wrapLocation(this.source.location);
-        const next = Cutter.createDirtyCut(curr, "before");
-        const prev = Cutter.createDirtyCut(curr, "here");
-        await this.mutator.update(() => this.source.replace(prev));
-        await this.mutator.update(() => this.source.push(next));
+        const nogo = makeBackOutLocation(this.source.location);
+        await this.mutator.update(() => this.source.push(nogo));
     }
 }

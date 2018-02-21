@@ -1,4 +1,5 @@
 import { IHistory, ILocation, PUSH, REPLACE } from "./api";
+import { isBackOutLocation } from "./Cutter";
 import { nextLocation } from "./nextLocation";
 import { nextState } from "./nextState";
 
@@ -29,12 +30,14 @@ export class Mutator {
                 }
             };
 
-            const unlisten = this.source.listen(() => {
-                try {
-                    unlisten();
-                    resolve();
-                } finally {
-                    this.currentRejectFunc = null;
+            const unlisten = this.source.listen(location => {
+                if (!isBackOutLocation(location)) {
+                    try {
+                        unlisten();
+                        resolve();
+                    } finally {
+                        this.currentRejectFunc = null;
+                    }
                 }
             });
 
