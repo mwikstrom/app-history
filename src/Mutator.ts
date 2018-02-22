@@ -59,7 +59,7 @@ export class Mutator {
     public changeWasBlocked() {
         const next = this.rejects.pop();
         if (next) {
-            next(new Error("app-history: navigation was blocked"));
+            next(new Error("app-history: Navigation was blocked"));
         }
     }
 }

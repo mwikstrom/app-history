@@ -721,5 +721,37 @@ describe("createAppHistory", async () => {
             await history.push("test");
             expect(history.status).toBe("ready");
         });
+
+        it("can block navigation", async () => {
+            const history = await createAndInitAppHistory({
+                mode: "memory",
+                getUserConfirmation(message, callback) {
+                    callback(false);
+                },
+            });
+
+            history.block("blocked");
+
+            let error: Error | null = null;
+            await history.push("bad").catch(reason => error = reason);
+            expect(error).not.toBeNull();
+            expect(error.message).toBe("app-history: Navigation was blocked");
+        });
+
+        it("can block navigation", async () => {
+            const history = await createAndInitAppHistory({
+                mode: "memory",
+                getUserConfirmation(message, callback) {
+                    callback(false);
+                },
+            });
+
+            history.block();
+
+            let error: Error | null = null;
+            await history.push("bad").catch(reason => error = reason);
+            expect(error).not.toBeNull();
+            expect(error.message).toBe("app-history: Navigation was blocked");
+        });
     });
 });
