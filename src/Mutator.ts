@@ -18,7 +18,7 @@ export class Mutator {
     public update(action: MutateFunc) {
         return new Promise<void>((resolve, reject) => {
             this.rejects.push(reject);
-            
+
             const unlisten = this.source.listen(location => {
                 if (!isBackOutLocation(location)) {
                     try {
