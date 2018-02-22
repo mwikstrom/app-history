@@ -1,5 +1,4 @@
 import { IHistory, ILocation, PUSH, REPLACE } from "./api";
-import { isBackOutLocation } from "./Cutter";
 import { nextLocation } from "./nextLocation";
 import { nextState } from "./nextState";
 
@@ -19,16 +18,14 @@ export class Mutator {
         return new Promise<void>((resolve, reject) => {
             this.rejects.push(reject);
 
-            const unlisten = this.source.listen(location => {
-                if (!isBackOutLocation(location)) {
-                    try {
-                        unlisten();
-                        resolve();
-                    } finally {
-                        this.rejects.pop();
-                    }
+            const unlisten = this.source.listen(() => {
+                try {
+                    unlisten();
+                    resolve();
+                } finally {
+                    this.rejects.pop();
                 }
-            });
+        });
 
             action();
         });
@@ -58,8 +55,6 @@ export class Mutator {
 
     public changeWasBlocked() {
         const next = this.rejects.pop();
-        if (next) {
-            next(new Error("app-history: Navigation was blocked"));
-        }
+        next!(new Error("app-history: Navigation was blocked"));
     }
 }

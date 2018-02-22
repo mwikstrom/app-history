@@ -7,14 +7,14 @@ export type ProtectorIdleStatus = "created" | "ready" | "disposed";
 type ResolveOnIdle = () => void;
 
 export class Protector {
-    private isBusy = 0;
+    private isBusy = false;
     private idleStatus: ProtectorIdleStatus = "created";
     private resolveOnIdle: ResolveOnIdle[] = [];
 
     constructor(private tracker: Tracker) {}
 
     public get status(): ProtectorStatus {
-        return this.isBusy === 0 ? this.idleStatus : "busy";
+        return this.isBusy ? "busy" : this.idleStatus;
     }
 
     public sync<T extends (...args: any[]) => any>(
@@ -57,10 +57,10 @@ export class Protector {
     public whenIdle = () => {
         const self = this;
         return new Promise<void>(resolve => {
-            if (self.isBusy === 0) {
-                resolve();
-            } else {
+            if (self.isBusy) {
                 self.resolveOnIdle.push(resolve);
+            } else {
+                resolve();
             }
         });
     }
@@ -68,21 +68,21 @@ export class Protector {
     private enter() {
         this.throwIfLocked();
         this.throwIfDisposed();
-        ++this.isBusy;
+        this.isBusy = true;
     }
 
     private exit(then?: ProtectorIdleStatus) {
-        if (--this.isBusy === 0) {
-            if (typeof then === "string") {
-                this.idleStatus = then;
-            }
-
-            this.resolveOnIdle.forEach(callback => callback());
+        if (typeof then === "string") {
+            this.idleStatus = then;
         }
+
+        this.isBusy = false;
+
+        this.resolveOnIdle.forEach(callback => callback());
     }
 
     private throwIfLocked() {
-        if (this.isBusy !== 0) {
+        if (this.isBusy) {
             throw new Error("app-history: Concurrent operation not allowed");
         }
     }

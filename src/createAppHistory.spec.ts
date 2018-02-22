@@ -772,5 +772,21 @@ describe("createAppHistory", async () => {
             expect(error).not.toBeNull();
             expect(error.message).toBe("app-history: Navigation was blocked");
         });
+
+        it("cannot go forward into back out location", async () => {
+            const history = await createAppHistory({mode: "memory"});
+            const source = history.source as MemoryHistory;
+
+            await history.push("a");
+            await history.push("b");
+            await history.goBack();
+            await history.cut();
+
+            expect(source.index).toBe(1);
+
+            await history.goForward();
+
+            expect(source.index).toBe(1);
+        });
     });
 });
