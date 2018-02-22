@@ -663,5 +663,63 @@ describe("createAppHistory", async () => {
             expect(history.location.state).toBe("fubar");
             expect(changes).toBe(1);
         });
+
+        it("cannot be used after dispose", async () => {
+            const history = await createAndInitAppHistory({mode: "memory"});
+            history.dispose();
+            
+            let error: Error | null = null;
+            await history.push("bad").catch(reason => error = reason);
+            expect(error).not.toBeNull();
+            expect(error.message).toBe("app-history: Operation not allowed after dispose")
+        });
+
+        it("does not allow concurrent operations", async () => {
+            let error: Error | null = null;
+
+            const history = await createAndInitAppHistory({
+                mode: "memory",
+                getUserConfirmation(message, callback) {
+                    history.push("bad").catch(reason => error = reason).then(() => callback(true));
+                }
+            });
+
+            history.block("blocked");
+            await history.push("test");
+
+            expect(error).not.toBeNull();
+            expect(error.message).toBe("app-history: Concurrent operation not allowed")
+        });
+
+        it("allows waiting for idle when not busy", async () => {
+            const history = await createAndInitAppHistory({mode: "memory"});
+            expect(history.isBusy).toBe(false);
+            await history.whenIdle();
+        });
+
+        it("allows waiting for idle when busy", async () => {
+            let waitDone = false;
+
+            const history = await createAndInitAppHistory({
+                mode: "memory",
+                getUserConfirmation(message, callback) {
+                    expect(history.isBusy).toBe(true);
+                    history.whenIdle().then(() => waitDone = true);
+                    callback(true);
+                }
+            });
+
+            history.block("blocked");
+            await history.push("test");
+
+            expect(waitDone).toBe(true);
+        });
+
+        it("can be used without explicit init", async () => {
+            const history = await createAppHistory({mode:"memory"});
+            expect(history.status).toBe("created");
+            await history.push("test");
+            expect(history.status).toBe("ready");
+        });
     });
 });

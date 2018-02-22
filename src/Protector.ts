@@ -44,6 +44,7 @@ export class Protector {
             try {
                 if (mode === "ready" && !self.tracker.ready) {
                     await self.tracker.start();
+                    this.idleStatus = "ready";
                 }
                 return await func.apply(this, args);
             } finally {

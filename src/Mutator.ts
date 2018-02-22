@@ -8,7 +8,7 @@ type RejectFunc = (reason: Error) => void;
 export type MutateFunc = () => void;
 
 export class Mutator {
-    private currentRejectFunc: RejectFunc | null = null;
+    private rejects: RejectFunc[] = [];
 
     constructor(
         private source: IHistory,
@@ -17,26 +17,15 @@ export class Mutator {
 
     public update(action: MutateFunc) {
         return new Promise<void>((resolve, reject) => {
-            if (this.currentRejectFunc) {
-                reject(new Error("app-history: concurrent navigation not supported"));
-                return;
-            }
-
-            this.currentRejectFunc = () => {
-                try {
-                    reject();
-                } finally {
-                    this.currentRejectFunc = null;
-                }
-            };
-
+            this.rejects.push(reject);
+            
             const unlisten = this.source.listen(location => {
                 if (!isBackOutLocation(location)) {
                     try {
                         unlisten();
                         resolve();
                     } finally {
-                        this.currentRejectFunc = null;
+                        this.rejects.pop();
                     }
                 }
             });
@@ -68,8 +57,9 @@ export class Mutator {
     })
 
     public changeWasBlocked() {
-        if (this.currentRejectFunc) {
-            this.currentRejectFunc(new Error("app-history: navigation was blocked"));
+        const next = this.rejects.pop();
+        if (next) {
+            next(new Error("app-history: navigation was blocked"));
         }
     }
 }
