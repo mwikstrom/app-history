@@ -1,4 +1,4 @@
-import { IHistory, ILocation, PathPredicate, UnregisterCallback } from "./api";
+import { IHistory, ILocation, IWrappedState, PathPredicate, UnregisterCallback } from "./api";
 import { isWrappedLocation } from "./isWrappedLocation";
 import { Mutator } from "./Mutator";
 import { Scanner } from "./Scanner";
@@ -52,12 +52,9 @@ export class Goer {
             }
 
             await this.go(found.delta);
-        } else if (found.resume && !forcePath && !willReplace) {
+        } else {
             willReplace = true;
-
-            if (isWrappedLocation(this.source.location)) {
-                state = this.source.location.state.data;
-            }
+            state = (this.source.location.state as IWrappedState).data;
         }
 
         if (found.resume) {

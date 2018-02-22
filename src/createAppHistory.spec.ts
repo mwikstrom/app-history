@@ -485,8 +485,27 @@ describe("createAppHistory", async () => {
             expect(changes).toBe(0);
         });
 
-        it("cannot go back to unmatched pattern (nocache)", async () => {
+        it("cannot go back to unmatched pattern (no cache)", async () => {
             const history = await createAndInitAppHistory({mode: "memory"});
+            const source = history.source as MemoryHistory;
+
+            await history.push("/a");
+            await history.push("/b", "foobar");
+            expect(source.index).toBe(2);
+            await history.push("/c");
+            await history.push("/d");
+
+            let changes = 0;
+            history.listen(() => ++changes);
+            expect(await history.goBack(/[x]/)).toBe(false);
+
+            expect(source.index).toBe(4);
+            expect(history.location.pathname).toBe("/d");
+            expect(changes).toBe(0);
+        });
+
+        it("cannot go back to unmatched pattern (nocache)", async () => {
+            const history = await createAndInitAppHistory({mode: "memory", cacheLimit: 0});
             const source = history.source as MemoryHistory;
 
             await history.push("/a");
