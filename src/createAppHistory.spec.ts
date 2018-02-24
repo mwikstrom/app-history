@@ -21,6 +21,22 @@ describe("createAppHistory", async () => {
         expect(history.cacheLimit).toBe(123);
     });
 
+    it("cannot be invoked with provider that does not declare a matching factory func", () => {
+        let error: Error | null = null;
+
+        try {
+            createAppHistory({
+                mode: "memory",
+                provider: {},
+            });
+        } catch (caught) {
+            error = caught;
+        }
+
+        expect(error).not.toBeNull();
+        expect(error.message).toBe("app-history: Provider does not support memory history");
+    });
+
     describe("returns a history extension object that", async () => {
         it("keeps track of app history depth", async () => {
             const history = await createAndInitAppHistory({mode: "memory"});

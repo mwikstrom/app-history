@@ -2,10 +2,21 @@ import { createBrowserHistory, createMemoryHistory } from "history";
 
 import { IHistory, IHistoryProvider, SourceMode, UserConfirmation } from "./api";
 
+const defaultUserConfirmation: UserConfirmation = (message, callback) => {
+    callback(window.confirm(message));
+};
+
+const noUserConfirmation: UserConfirmation = (_, callback) => {
+    callback(true);
+};
+
+const makeDefaultUserConfirmation = (mode: SourceMode) =>
+    mode === "browser" ? defaultUserConfirmation : noUserConfirmation;
+
 export function createSource(
     onChangeWasBlocked: () => void,
     mode: SourceMode,
-    getUserConfirmation?: UserConfirmation,
+    getUserConfirmation: UserConfirmation = makeDefaultUserConfirmation(mode),
     provider?: IHistoryProvider,
 ): IHistory {
     const getTrackedUserConfirmation: UserConfirmation = (message, callback) => {
@@ -19,13 +30,7 @@ export function createSource(
             }
         };
 
-        if (getUserConfirmation) {
-            getUserConfirmation(message, trackingCallback);
-        } else if (mode === "browser") {
-            trackingCallback(window.confirm(message));
-        } else {
-            callback(true);
-        }
+        getUserConfirmation(message, trackingCallback);
     };
 
     if (!provider) {
@@ -39,7 +44,7 @@ export function createSource(
         provider.createMemoryHistory : provider.createBrowserHistory;
 
     if (!factoryFunc) {
-        throw new Error("app-history: Missing provider for " + mode + " history");
+        throw new Error("app-history: Provider does not support " + mode + " history");
     }
 
     if (provider) {
