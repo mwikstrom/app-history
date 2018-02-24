@@ -1,6 +1,6 @@
 import { Tracker } from "./Tracker";
 
-export type ProtectionMode = "ready" | "idle";
+export type ProtectionMode = "ready" | "idle" | "any";
 export type ProtectorStatus = "busy" | ProtectorIdleStatus;
 export type ProtectorIdleStatus = "created" | "ready" | "disposed";
 
@@ -19,11 +19,12 @@ export class Protector {
 
     public sync<T extends (...args: any[]) => any>(
         func: T,
+        mode: ProtectionMode = "idle",
         then?: ProtectorIdleStatus,
     ): T {
         const self = this;
         const wrapped = (...args: any[]) => {
-            self.enter();
+            self.enter(mode === "any");
             try {
                 return func.apply(this, args);
             } finally {
@@ -40,7 +41,7 @@ export class Protector {
     ): T {
         const self = this;
         const wrapped = async (...args: any[]) => {
-            self.enter();
+            self.enter(mode === "any");
             try {
                 if (mode === "ready" && !self.tracker.ready) {
                     await self.tracker.start();
@@ -65,9 +66,13 @@ export class Protector {
         });
     }
 
-    private enter() {
+    private enter(ignoreDisposed: boolean) {
         this.throwIfLocked();
-        this.throwIfDisposed();
+
+        if (!ignoreDisposed) {
+            this.throwIfDisposed();
+        }
+
         this.isBusy = true;
     }
 

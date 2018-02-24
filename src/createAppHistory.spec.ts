@@ -55,6 +55,33 @@ describe("createAppHistory", async () => {
             expect(history.action).toBe(POP);
         });
 
+        it("can resume previous history", async () => {
+            const first = await createAndInitAppHistory({mode: "memory"});
+
+            await first.push("apa");
+            expect(first.depth).toBe(1);
+            first.dispose();
+
+            const second = await createAndInitAppHistory({
+                mode: "memory",
+                provider: {
+                    createMemoryHistory() { return first.source; },
+                },
+            });
+            expect(second.depth).toBe(1);
+        });
+
+        it("can be initialized twice", async () => {
+            const history = await createAndInitAppHistory({mode: "memory"});
+            await history.init();
+        });
+
+        it("can be disposed twice", async () => {
+            const history = await createAndInitAppHistory({mode: "memory"});
+            history.dispose();
+            history.dispose();
+        });
+
         it("can push using location descriptor", async () => {
             const history = await createAndInitAppHistory({mode: "memory"});
             await history.push({ hash: "#foo" });
