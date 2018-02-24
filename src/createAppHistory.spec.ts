@@ -366,9 +366,19 @@ describe("createAppHistory", async () => {
         it("can invoke with suppression", async () => {
             const history = await createAndInitAppHistory({mode: "memory"});
             expect(history.isSuppressed).toBe(false);
-            history.suppressWhile(() => {
+            await history.suppressWhile(() => {
                 expect(history.isSuppressed).toBe(true);
             });
+            expect(history.isSuppressed).toBe(false);
+        });
+
+        it("can invoke with failing async suppression", async () => {
+            const history = await createAndInitAppHistory({mode: "memory"});
+            expect(history.isSuppressed).toBe(false);
+            await history.suppressWhile(() => new Promise((_, reject) => {
+                expect(history.isSuppressed).toBe(true);
+                reject();
+            })).catch(() => { /* no-op */ });
             expect(history.isSuppressed).toBe(false);
         });
 
