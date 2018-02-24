@@ -39,7 +39,7 @@ export class Scanner {
             typeof match === "function" ? match :
             match.test.bind(match);
 
-        while (true) {
+        for (;;) {
             if (predicate(this.source.createHref(this.source.location))) {
                 return result;
             }

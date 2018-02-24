@@ -1,22 +1,12 @@
 import { createBrowserHistory, createMemoryHistory } from "history";
 
 import { IHistory, IHistoryProvider, SourceMode, UserConfirmation } from "./api";
-
-const defaultUserConfirmation: UserConfirmation = (message, callback) => {
-    callback(window.confirm(message));
-};
-
-const noUserConfirmation: UserConfirmation = (_, callback) => {
-    callback(true);
-};
-
-const makeDefaultUserConfirmation = (mode: SourceMode) =>
-    mode === "browser" ? defaultUserConfirmation : noUserConfirmation;
+import { makeUserConfirmation } from "./makeUserConfirmation";
 
 export function createSource(
     onChangeWasBlocked: () => void,
     mode: SourceMode,
-    getUserConfirmation: UserConfirmation = makeDefaultUserConfirmation(mode),
+    getUserConfirmation: UserConfirmation = makeUserConfirmation(mode),
     provider?: IHistoryProvider,
 ): IHistory {
     const getTrackedUserConfirmation: UserConfirmation = (message, callback) => {
@@ -40,16 +30,14 @@ export function createSource(
         };
     }
 
-    const factoryFunc = mode === "memory" ?
+    let factoryFunc = mode === "memory" ?
         provider.createMemoryHistory : provider.createBrowserHistory;
 
     if (!factoryFunc) {
         throw new Error("app-history: Provider does not support " + mode + " history");
     }
 
-    if (provider) {
-        factoryFunc.bind(provider);
-    }
+    factoryFunc = factoryFunc.bind(provider);
 
-    return factoryFunc({ getUserConfirmation: getTrackedUserConfirmation });
+    return factoryFunc!({ getUserConfirmation: getTrackedUserConfirmation });
 }
